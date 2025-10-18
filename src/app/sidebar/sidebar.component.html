@@ -1,0 +1,38 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">🎓</span>
+      <h2>EduHelper</h2>
+    </div>
+    <p class="subtitle">Ton assistant d'études</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div
+      *ngFor="let item of sidebarItems"
+      class="sidebar-item"
+      [class.active]="activeItem === item.id"
+      (click)="selectItem(item.id)"
+      [routerLink]="item.route"
+      routerLinkActive="active">
+
+      <span class="item-icon">{{ item.icon }}</span>
+      <div class="item-content">
+        <h3 class="item-title">{{ item.title }}</h3>
+        <p class="item-description">{{ item.description }}</p>
+      </div>
+    </div>
+  </nav>
+  <!-- 🔥 Logout Button -->
+    <button class="logout-btn" (click)="logout()">
+      🚪 Se déconnecter
+    </button>
+  <div class="sidebar-footer">
+    <div class="user-section">
+      <span class="user-avatar">👤</span>
+      <div class="user-info">
+        <p class="user-name">Mon Profil</p>
+      </div>
+    </div>
+  </div>
+</aside>

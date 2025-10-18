@@ -7,4 +7,10 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'studentHelper';
+  isLoggedIn = false; // start as false
+
+  // Call this after user successfully logs in
+  onLoginSuccess() {
+    this.isLoggedIn = true;
+  }
 }
