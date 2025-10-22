@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router, ActivatedRoute } from '@angular/router';
 
 interface Essay {
   id: number;
@@ -62,7 +63,8 @@ export class VerificateurOriginaliteComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
 
-  constructor(private http: HttpClient) {}
+constructor(private http: HttpClient,    private router: Router  // Ajoute ça
+,    private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.loadEssays();
@@ -157,6 +159,12 @@ export class VerificateurOriginaliteComponent implements OnInit {
       }
     });
   }
+
+  // Ajoute cette méthode
+  navigateToThesis(): void {
+    this.router.navigate(['/app/thesis-plagiarism'], { relativeTo: this.route });
+  }
+
 
   getSimilarityColor(score: number): string {
     if (score >= 0.9) return '#f56565';

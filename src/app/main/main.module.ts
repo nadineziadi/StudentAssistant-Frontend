@@ -9,6 +9,7 @@ import { OptimiseurCvComponent } from './pages/optimiseur-cv/optimiseur-cv.compo
 import { MainComponent } from './main/main.component';
 import { SidebarComponent } from "src/app/sidebar/sidebar.component";
 import { FormsModule } from '@angular/forms';
+//import { ThesisPlagiarismComponent } from './pages/thesis-plagiarism/thesis-plagiarism.component';
 
 @NgModule({
   declarations: [
@@ -16,8 +17,7 @@ import { FormsModule } from '@angular/forms';
     RevisionInteractiveComponent,
     AssistantRedactionComponent,
     OptimiseurCvComponent,
-    MainComponent
-  ],
+    MainComponent  ],
   imports: [
     CommonModule,
     MainRoutingModule,

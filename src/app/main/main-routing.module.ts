@@ -22,6 +22,12 @@ const routes: Routes = [
         loadComponent: () => import('./pages/verificateur-originalite/verificateur-originalite.component')
           .then(m => m.VerificateurOriginaliteComponent)
       },
+      // ADD THIS ROUTE 👇
+      { 
+        path: 'thesis-plagiarism', 
+        loadComponent: () => import('./pages/thesis-plagiarism/thesis-plagiarism.component')
+          .then(m => m.ThesisPlagiarismComponent)
+      },
       { path: 'assistant-redaction', component: AssistantRedactionComponent },
       { path: 'optimiseur-cv', component: OptimiseurCvComponent }
     ]
