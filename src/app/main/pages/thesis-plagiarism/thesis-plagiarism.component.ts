@@ -27,6 +27,7 @@ interface ThesisReport {
   status: string;
   matches: ThesisMatch[];
 }
+
 @Component({
   selector: 'app-thesis-plagiarism',
   standalone: true,
@@ -34,8 +35,8 @@ interface ThesisReport {
   templateUrl: './thesis-plagiarism.component.html',
   styleUrls: ['./thesis-plagiarism.component.css']
 })
-export class ThesisPlagiarismComponent implements OnInit  {
-   private apiUrl = 'http://localhost:8222/api/thesis';
+export class ThesisPlagiarismComponent implements OnInit {
+  private apiUrl = 'http://localhost:8222/api/thesis';
   
   selectedFile: File | null = null;
   theses: Thesis[] = [];
@@ -88,8 +89,13 @@ export class ThesisPlagiarismComponent implements OnInit  {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
+    // Don't set Content-Type for FormData - browser will set it automatically with boundary
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    });
+
     this.http.post<Thesis>(`${this.apiUrl}/upload`, formData, {
-      headers: this.getHeaders()
+      headers: headers
     }).subscribe({
       next: (thesis) => {
         this.successMessage = 'Rapport importé avec succès!';
@@ -150,18 +156,43 @@ export class ThesisPlagiarismComponent implements OnInit  {
     this.isLoading = true;
     this.errorMessage = '';
 
+    // Add responseType and more detailed error handling
     this.http.get<Thesis[]>(`${this.apiUrl}/my-theses`, {
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      observe: 'response' // Get full response to debug
     }).subscribe({
-      next: (data) => {
-        this.theses = data.sort((a, b) =>
-          new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-        );
+      next: (response) => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        console.log('Response body:', response.body);
+        
+        // Handle null or undefined body
+        if (response.body) {
+          this.theses = response.body.sort((a, b) =>
+            new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+          );
+        } else {
+          this.theses = [];
+        }
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Load error:', error);
-        this.errorMessage = 'Erreur lors du chargement des rapports';
+        console.error('Load error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error,
+          ok: error.ok
+        });
+        
+        // Still show empty state instead of error if it's just empty
+        if (error.status === 200) {
+          this.theses = [];
+          this.errorMessage = '';
+        } else {
+          this.errorMessage = 'Erreur lors du chargement des rapports';
+        }
         this.isLoading = false;
       }
     });
@@ -211,5 +242,4 @@ export class ThesisPlagiarismComponent implements OnInit  {
     this.errorMessage = '';
     this.successMessage = '';
   }
-
 }
