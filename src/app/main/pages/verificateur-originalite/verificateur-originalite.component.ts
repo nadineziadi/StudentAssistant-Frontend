@@ -160,6 +160,28 @@ constructor(private http: HttpClient,    private router: Router  // Ajoute ça
     });
   }
 
+   deleteEssay(essayId: number, event: Event): void {
+    event.stopPropagation();
+    
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet essai ?')) {
+      return;
+    }
+
+    this.http.delete(`${this.apiUrl}/essays/${essayId}`, {
+      headers: this.getHeaders()
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'Essai supprimé avec succès';
+        this.loadEssays();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (error) => {
+        console.error('Delete error:', error);
+        this.errorMessage = 'Erreur lors de la suppression';
+      }
+    });
+  }
+
   // Ajoute cette méthode
   navigateToThesis(): void {
     this.router.navigate(['/app/thesis-plagiarism'], { relativeTo: this.route });

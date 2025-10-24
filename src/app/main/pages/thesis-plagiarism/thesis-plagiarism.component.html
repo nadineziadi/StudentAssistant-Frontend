@@ -136,6 +136,13 @@
             <span class="btn-icon">📊</span>
             Voir le rapport
           </button>
+          <button 
+            class="btn-delete"
+            (click)="deleteThesis(thesis.id, $event)"
+            title="Supprimer ce rapport">
+            <span class="btn-icon">🗑️</span>
+            Supprimer
+          </button>
         </div>
       </div>
     </div>

@@ -66,7 +66,14 @@ export class ThesisPlagiarismComponent implements OnInit {
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    
     if (file && file.type === 'application/pdf') {
+      if (file.size > maxSize) {
+        this.errorMessage = 'Le fichier est trop volumineux (max 50MB)';
+        this.selectedFile = null;
+        return;
+      }
       this.selectedFile = file;
       this.errorMessage = '';
     } else {
@@ -89,7 +96,6 @@ export class ThesisPlagiarismComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    // Don't set Content-Type for FormData - browser will set it automatically with boundary
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     });
@@ -103,7 +109,6 @@ export class ThesisPlagiarismComponent implements OnInit {
         this.loadTheses();
         this.isUploading = false;
         
-        // Auto-check after upload
         setTimeout(() => {
           this.checkThesis(thesis.id);
         }, 1000);
@@ -156,17 +161,11 @@ export class ThesisPlagiarismComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Add responseType and more detailed error handling
     this.http.get<Thesis[]>(`${this.apiUrl}/my-theses`, {
       headers: this.getHeaders(),
-      observe: 'response' // Get full response to debug
+      observe: 'response'
     }).subscribe({
       next: (response) => {
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        console.log('Response body:', response.body);
-        
-        // Handle null or undefined body
         if (response.body) {
           this.theses = response.body.sort((a, b) =>
             new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
@@ -177,16 +176,7 @@ export class ThesisPlagiarismComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Load error details:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          url: error.url,
-          error: error.error,
-          ok: error.ok
-        });
-        
-        // Still show empty state instead of error if it's just empty
+        console.error('Load error:', error);
         if (error.status === 200) {
           this.theses = [];
           this.errorMessage = '';
@@ -194,6 +184,28 @@ export class ThesisPlagiarismComponent implements OnInit {
           this.errorMessage = 'Erreur lors du chargement des rapports';
         }
         this.isLoading = false;
+      }
+    });
+  }
+
+  deleteThesis(thesisId: number, event: Event): void {
+    event.stopPropagation();
+    
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?')) {
+      return;
+    }
+
+    this.http.delete(`${this.apiUrl}/${thesisId}`, {
+      headers: this.getHeaders()
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'Rapport supprimé avec succès';
+        this.loadTheses();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (error) => {
+        console.error('Delete error:', error);
+        this.errorMessage = 'Erreur lors de la suppression';
       }
     });
   }

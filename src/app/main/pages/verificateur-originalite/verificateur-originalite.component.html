@@ -170,6 +170,15 @@
             <span class="btn-icon">🔍</span>
             {{ essay.isPlagiarismChecked ? 'Re-vérifier' : 'Vérifier' }}
           </button>
+
+          <!-- NEW DELETE BUTTON -->
+  <button 
+    class="btn-delete"
+    (click)="deleteEssay(essay.id, $event)"
+    title="Supprimer cet essai">
+    <span class="btn-icon">🗑️</span>
+    Supprimer
+  </button>
         </div>
       </div>
     </div>
