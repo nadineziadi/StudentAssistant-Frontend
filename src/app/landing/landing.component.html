@@ -1,0 +1,177 @@
+<div class="landing-page">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="nav-logo">
+        <span class="nav-icon">🎓</span>
+        <span class="nav-brand">EduHelper</span>
+      </div>
+      <div class="nav-actions">
+        <a class="btn-login" [routerLink]="'/login'">Connexion</a>
+        <a class="btn-signup" [routerLink]="'/signup'">Créer un compte</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-background">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>Ton assistant académique intelligent</span>
+      </div>
+
+      <h1 class="hero-title">
+        Transforme ta façon
+        <br />
+        <span class="gradient-text">d'étudier et réussir</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        De la prise de notes à la recherche de stage, EduHelper te accompagne
+        à chaque étape de ton parcours académique avec des outils intelligents
+        et intuitifs.
+      </p>
+
+      <div class="hero-buttons">
+        <a class="btn-hero-primary" [routerLink]="'/signup'">
+          <span>Commencer gratuitement</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <button class="btn-hero-secondary">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 9L10 11L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Découvrir les outils</span>
+        </button>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-number">5+</div>
+          <div class="stat-label">Outils disponibles</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Gratuit</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Disponible</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="feature-showcase">
+        <div class="showcase-card card-animated-1">
+          <div class="card-icon">📚</div>
+          <div class="card-content">
+            <div class="card-title">Synthèse de cours</div>
+            <div class="card-desc">Résumés automatiques</div>
+          </div>
+        </div>
+
+        <div class="showcase-card card-animated-2">
+          <div class="card-icon">✨</div>
+          <div class="card-content">
+            <div class="card-title">Révision interactive</div>
+            <div class="card-desc">Questions personnalisées</div>
+          </div>
+        </div>
+
+        <div class="showcase-card card-animated-3">
+          <div class="card-icon">🔍</div>
+          <div class="card-content">
+            <div class="card-title">Vérification d'originalité</div>
+            <div class="card-desc">Détection de similitudes</div>
+          </div>
+        </div>
+
+        <div class="showcase-card card-animated-4">
+          <div class="card-icon">✍️</div>
+          <div class="card-content">
+            <div class="card-title">Assistant rédaction</div>
+            <div class="card-desc">Corrections intelligentes</div>
+          </div>
+        </div>
+
+        <div class="showcase-card card-animated-5">
+          <div class="card-icon">🎯</div>
+          <div class="card-content">
+            <div class="card-title">Optimiseur de CV</div>
+            <div class="card-desc">CV professionnel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="features-header">
+      <h2 class="section-title">Tout ce dont tu as besoin pour réussir</h2>
+      <p class="section-subtitle">Des outils puissants conçus spécialement pour les étudiants</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-item" *ngFor="let feature of features">
+        <div class="feature-icon-wrapper" [style.background]="feature.color">
+          <span class="feature-icon">{{ feature.icon }}</span>
+        </div>
+        <h3 class="feature-title">{{ feature.title }}</h3>
+        <p class="feature-description">{{ feature.description }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="cta-card">
+      <div class="cta-content">
+        <h2 class="cta-title">Prêt à booster tes études ?</h2>
+        <p class="cta-subtitle">
+          Rejoins des milliers d'étudiants qui utilisent EduHelper
+          pour exceller dans leurs études
+        </p>
+        <div class="cta-buttons">
+          <a class="btn-cta-primary" [routerLink]="'/signup'">
+            Créer un compte gratuit
+            <span class="btn-arrow">→</span>
+          </a>
+          <a class="btn-cta-secondary" [routerLink]="'/login'">
+            J'ai déjà un compte
+          </a>
+        </div>
+      </div>
+      <div class="cta-visual">
+        <div class="floating-emoji emoji-1">🚀</div>
+        <div class="floating-emoji emoji-2">⭐</div>
+        <div class="floating-emoji emoji-3">🎓</div>
+        <div class="floating-emoji emoji-4">💡</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <span class="footer-icon">🎓</span>
+        <span class="footer-name">EduHelper</span>
+      </div>
+      <p class="footer-text">© 2025 EduHelper. Tous droits réservés.</p>
+    </div>
+  </footer>
+</div>

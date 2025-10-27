@@ -1,0 +1,230 @@
+<div class="thesis-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">📄</div>
+      <div class="header-text">
+        <h1 class="page-title">Rapport de Fin d'Études</h1>
+        <p class="page-subtitle">Vérifiez le plagiat dans votre rapport PDF</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'upload'"
+      (click)="switchTab('upload')">
+      <span class="tab-icon">📤</span>
+      <span>Importer un rapport</span>
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'history'"
+      (click)="switchTab('history')">
+      <span class="tab-icon">📚</span>
+      <span>Mes rapports</span>
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="message success-message" *ngIf="successMessage">
+    <span class="message-icon">✓</span>
+    {{ successMessage }}
+  </div>
+
+  <div class="message error-message" *ngIf="errorMessage">
+    <span class="message-icon">⚠</span>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Upload Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'upload'">
+    <div class="upload-card">
+      <div class="upload-zone" (click)="fileInput.click()">
+        <input 
+          #fileInput 
+          type="file" 
+          accept=".pdf" 
+          (change)="onFileSelected($event)"
+          hidden />
+        <div class="upload-content">
+          <span class="upload-icon">📁</span>
+          <p class="upload-text">
+            <strong>Clique pour choisir ton rapport PDF</strong> ou glisse-le ici
+          </p>
+          <p class="upload-hint">PDF uniquement (Max 50MB)</p>
+        </div>
+      </div>
+
+      <div class="selected-file" *ngIf="selectedFile">
+        <div class="file-info">
+          <span class="file-icon">📄</span>
+          <div class="file-details">
+            <p class="file-name">{{ selectedFile.name }}</p>
+            <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+          </div>
+        </div>
+        <button class="remove-file-btn" (click)="removeFile()">
+          <span>✕</span>
+        </button>
+      </div>
+
+      <button 
+        class="btn-upload"
+        (click)="uploadThesis()"
+        [disabled]="!selectedFile || isUploading"
+        [class.loading]="isUploading">
+        <span *ngIf="!isUploading">
+          <span class="btn-icon">🚀</span>
+          Importer et vérifier
+        </span>
+        <span *ngIf="isUploading" class="loading-spinner">
+          <span class="spinner"></span>
+          Traitement en cours...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'history'">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner-large"></div>
+      <p>Chargement des rapports...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && theses.length === 0">
+      <div class="empty-icon">📭</div>
+      <h3>Aucun rapport importé</h3>
+      <p>Commence par importer ton premier rapport</p>
+      <button class="btn-secondary" (click)="switchTab('upload')">
+        Importer un rapport
+      </button>
+    </div>
+
+    <div class="theses-grid" *ngIf="!isLoading && theses.length > 0">
+      <div class="thesis-card" *ngFor="let thesis of theses">
+        <div class="thesis-header">
+          <div class="thesis-info">
+            <h3 class="thesis-title">{{ thesis.title }}</h3>
+            <p class="thesis-meta">
+              <span class="meta-item">
+                <span class="meta-icon">📅</span>
+                {{ formatDate(thesis.uploadedAt) }}
+              </span>
+              <span class="meta-item">
+                <span class="meta-icon">📄</span>
+                {{ thesis.fileName }}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div class="thesis-actions">
+          <button 
+            class="btn-check"
+            (click)="checkThesis(thesis.id)"
+            [disabled]="isChecking">
+            <span class="btn-icon">🔍</span>
+            Vérifier
+          </button>
+          <button 
+            class="btn-report"
+            (click)="viewReport(thesis.id)">
+            <span class="btn-icon">📊</span>
+            Voir le rapport
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="modal-overlay" *ngIf="showResult" (click)="closeResult()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Résultats de la vérification</h2>
+        <button class="modal-close" (click)="closeResult()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="currentReport">
+        <!-- Score Overview -->
+        <div class="score-card">
+          <div class="score-circle" [style.border-color]="getColor(currentReport.overallSimilarityScore)">
+            <div class="score-value" [style.color]="getColor(currentReport.overallSimilarityScore)">
+              {{ getScorePercentage(currentReport.overallSimilarityScore) }}%
+            </div>
+            <div class="score-label">Similarité</div>
+          </div>
+          <div class="score-info">
+            <h3 class="score-status" [style.color]="getColor(currentReport.overallSimilarityScore)">
+              {{ getLabel(currentReport.overallSimilarityScore) }}
+            </h3>
+            <p class="score-description">
+              {{ currentReport.status }}
+            </p>
+          </div>
+        </div>
+
+        <!-- No Matches -->
+        <div class="no-matches" *ngIf="currentReport.matches.length === 0">
+          <div class="no-matches-icon">✨</div>
+          <h3>Aucune similarité détectée</h3>
+          <p>Votre rapport semble original. Aucun contenu similaire n'a été trouvé dans notre base de données.</p>
+        </div>
+
+        <!-- Matches List -->
+        <div class="matches-section" *ngIf="currentReport.matches.length > 0">
+          <h3 class="matches-title">
+            <span class="matches-icon">⚠️</span>
+            Rapports similaires détectés ({{ currentReport.matches.length }})
+          </h3>
+
+          <div class="matches-list">
+            <div class="match-card" *ngFor="let match of currentReport.matches">
+              <div class="match-header">
+                <div class="match-info">
+                  <h4 class="match-title">{{ match.matchedThesisTitle }}</h4>
+                  <p class="match-author">
+                    <span class="author-icon">👤</span>
+                    {{ match.matchedStudentId }}
+                  </p>
+                </div>
+                <div class="match-score" 
+                     [style.background-color]="getColor(match.similarityScore) + '20'" 
+                     [style.color]="getColor(match.similarityScore)">
+                  {{ getScorePercentage(match.similarityScore) }}%
+                </div>
+              </div>
+              <div class="match-bar">
+                <div 
+                  class="match-bar-fill" 
+                  [style.width.%]="getScorePercentage(match.similarityScore)"
+                  [style.background-color]="getColor(match.similarityScore)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn-modal-primary" (click)="closeResult()">
+            Compris
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checking Overlay -->
+  <div class="checking-overlay" *ngIf="isChecking">
+    <div class="checking-card">
+      <div class="spinner-large"></div>
+      <h3>Vérification en cours...</h3>
+      <p>Analyse de votre rapport avec l'IA</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+<div class="auth-container">
+  <div class="auth-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <span class="logo-icon">🎓</span>
+        <span class="logo-text">EduHelper</span>
+      </div>
+      <h1 class="auth-title">Bon retour !</h1>
+      <p class="auth-subtitle">Connecte-toi pour continuer tes études</p>
+    </div>
+
+    <form class="auth-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <span class="label-icon">👤</span>
+          Nom d'utilisateur
+        </label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-input"
+          [(ngModel)]="credentials.username"
+          placeholder="Ton nom d'utilisateur"
+          required
+          [disabled]="isLoading"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <span class="label-icon">🔒</span>
+          Mot de passe
+        </label>
+        <div class="password-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            class="form-input"
+            [(ngModel)]="credentials.password"
+            placeholder="Ton mot de passe"
+            required
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+            [disabled]="isLoading"
+          >
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        <span class="error-icon">⚠️</span>
+        {{ errorMessage }}
+      </div>
+
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="isLoading"
+        [class.loading]="isLoading"
+      >
+        <span *ngIf="!isLoading">Se connecter</span>
+        <span *ngIf="isLoading" class="loading-spinner">
+          <span class="spinner"></span>
+          Connexion...
+        </span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p class="footer-text">
+        Pas encore de compte ?
+        <a routerLink="/signup" class="footer-link">Créer un compte</a>
+      </p>
+    </div>
+  </div>
+
+  <a routerLink="/" class="back-home">
+    <span class="back-arrow">←</span>
+    Retour à l'accueil
+  </a>
+</div>

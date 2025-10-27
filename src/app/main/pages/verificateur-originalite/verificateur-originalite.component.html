@@ -1,0 +1,262 @@
+<div class="verificateur-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">🔍</div>
+      <div class="header-text">
+        <h1 class="page-title">Vérificateur d'Originalité</h1>
+        <p class="page-subtitle">Assurez l'authenticité de vos travaux académiques</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'submit'"
+      (click)="switchTab('submit')">
+      <span class="tab-icon">✍️</span>
+      <span>Soumettre un essai</span>
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'history'"
+      (click)="switchTab('history')">
+      <span class="tab-icon">📚</span>
+      <span>Historique</span>
+    </button>
+    <!-- NOUVEAU TAB -->
+  <button 
+    class="tab-button"
+   (click)="navigateToThesis()">
+    <span class="tab-icon">📄</span>
+    <span>Rapports PDF</span>
+  </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="message success-message" *ngIf="successMessage">
+    <span class="message-icon">✓</span>
+    {{ successMessage }}
+  </div>
+
+  <div class="message error-message" *ngIf="errorMessage">
+    <span class="message-icon">⚠</span>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Submit Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'submit'">
+    <div class="submit-card">
+      <form (ngSubmit)="submitEssay()">
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📋</span>
+            ID de l'assignation
+          </label>
+          <input
+            type="text"
+            class="form-input"
+            [(ngModel)]="assignmentId"
+            name="assignmentId"
+            placeholder="Ex: ASSIGNMENT_001"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📝</span>
+            Titre
+          </label>
+          <input
+            type="text"
+            class="form-input"
+            [(ngModel)]="title"
+            name="title"
+            placeholder="Titre de votre essai"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📄</span>
+            Contenu
+          </label>
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="content"
+            name="content"
+            placeholder="Écrivez votre essai ici..."
+            rows="12"
+            required
+          ></textarea>
+          <div class="character-count">
+            {{ content.length }} caractères
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn-submit"
+          [disabled]="isSubmitting"
+          [class.loading]="isSubmitting">
+          <span *ngIf="!isSubmitting">
+            <span class="btn-icon">🚀</span>
+            Soumettre et vérifier
+          </span>
+          <span *ngIf="isSubmitting" class="loading-spinner">
+            <span class="spinner"></span>
+            Traitement en cours...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'history'">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner-large"></div>
+      <p>Chargement des essais...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && essays.length === 0">
+      <div class="empty-icon">📭</div>
+      <h3>Aucun essai soumis</h3>
+      <p>Commencez par soumettre votre premier essai</p>
+      <button class="btn-secondary" (click)="switchTab('submit')">
+        Soumettre un essai
+      </button>
+    </div>
+
+    <div class="essays-grid" *ngIf="!isLoading && essays.length > 0">
+      <div class="essay-card" *ngFor="let essay of essays">
+        <div class="essay-header">
+          <div class="essay-info">
+            <h3 class="essay-title">{{ essay.title }}</h3>
+            <p class="essay-meta">
+              <span class="meta-item">
+                <span class="meta-icon">📋</span>
+                {{ essay.assignmentId }}
+              </span>
+              <span class="meta-item">
+                <span class="meta-icon">📅</span>
+                {{ formatDate(essay.submittedAt) }}
+              </span>
+            </p>
+          </div>
+          <div class="essay-status">
+            <span 
+              class="status-badge" 
+              [class.checked]="essay.isPlagiarismChecked"
+              [class.pending]="!essay.isPlagiarismChecked">
+              {{ essay.isPlagiarismChecked ? '✓ Vérifié' : '⏳ En attente' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="essay-content">
+          <p class="essay-preview">{{ essay.content.substring(0, 150) }}...</p>
+        </div>
+
+        <div class="essay-actions">
+          <button 
+            class="btn-check"
+            (click)="checkPlagiarism(essay.id)"
+            [disabled]="isChecking">
+            <span class="btn-icon">🔍</span>
+            {{ essay.isPlagiarismChecked ? 'Re-vérifier' : 'Vérifier' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="modal-overlay" *ngIf="showResult" (click)="closeResult()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Résultats de la vérification</h2>
+        <button class="modal-close" (click)="closeResult()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="plagiarismResult">
+        <!-- Score Overview -->
+        <div class="score-card">
+          <div class="score-circle" [style.border-color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
+            <div class="score-value" [style.color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
+              {{ getScorePercentage(plagiarismResult.overallPlagiarismScore) }}%
+            </div>
+            <div class="score-label">Similarité</div>
+          </div>
+          <div class="score-info">
+            <h3 class="score-status" [style.color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
+              {{ getSimilarityLabel(plagiarismResult.overallPlagiarismScore) }}
+            </h3>
+            <p class="score-description">
+              {{ plagiarismResult.status }}
+            </p>
+          </div>
+        </div>
+
+        <!-- No Matches -->
+        <div class="no-matches" *ngIf="plagiarismResult.matches.length === 0">
+          <div class="no-matches-icon">✨</div>
+          <h3>Aucune similarité détectée</h3>
+          <p>Votre travail semble original. Aucun contenu similaire n'a été trouvé dans notre base de données.</p>
+        </div>
+
+        <!-- Matches List -->
+        <div class="matches-section" *ngIf="plagiarismResult.matches.length > 0">
+          <h3 class="matches-title">
+            <span class="matches-icon">⚠️</span>
+            Contenus similaires détectés ({{ plagiarismResult.matches.length }})
+          </h3>
+
+          <div class="matches-list">
+            <div class="match-card" *ngFor="let match of plagiarismResult.matches">
+              <div class="match-header">
+                <div class="match-info">
+                  <h4 class="match-title">{{ match.title }}</h4>
+                  <p class="match-author">
+                    <span class="author-icon">👤</span>
+                    {{ match.matchedStudentId }}
+                  </p>
+                </div>
+                <div class="match-score" [style.background-color]="getSimilarityColor(match.similarityScore) + '20'" [style.color]="getSimilarityColor(match.similarityScore)">
+                  {{ getScorePercentage(match.similarityScore) }}%
+                </div>
+              </div>
+              <div class="match-bar">
+                <div 
+                  class="match-bar-fill" 
+                  [style.width.%]="getScorePercentage(match.similarityScore)"
+                  [style.background-color]="getSimilarityColor(match.similarityScore)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn-modal-primary" (click)="closeResult()">
+            Compris
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checking Overlay -->
+  <div class="checking-overlay" *ngIf="isChecking">
+    <div class="checking-card">
+      <div class="spinner-large"></div>
+      <h3>Vérification en cours...</h3>
+      <p>Analyse de votre essai avec l'IA</p>
+    </div>
+  </div>
+</div>
