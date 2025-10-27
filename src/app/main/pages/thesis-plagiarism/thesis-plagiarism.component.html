@@ -8,23 +8,35 @@
         <p class="page-subtitle">Vérifiez le plagiat dans votre rapport PDF</p>
       </div>
     </div>
+    <!-- Stats Badge -->
+    <div class="header-stats">
+      <div class="stat-badge">
+        <span class="stat-value">{{ theses.length }}</span>
+        <span class="stat-label">Rapports</span>
+      </div>
+      <div class="stat-badge">
+        <span class="stat-value">{{ getFilterCount('checked') }}</span>
+        <span class="stat-label">Vérifiés</span>
+      </div>
+    </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeTab === 'upload'"
       (click)="switchTab('upload')">
       <span class="tab-icon">📤</span>
       <span>Importer un rapport</span>
     </button>
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeTab === 'history'"
       (click)="switchTab('history')">
       <span class="tab-icon">📚</span>
       <span>Mes rapports</span>
+      <span class="tab-badge" *ngIf="theses.length > 0">{{ theses.length }}</span>
     </button>
   </div>
 
@@ -43,10 +55,10 @@
   <div class="tab-content" *ngIf="activeTab === 'upload'">
     <div class="upload-card">
       <div class="upload-zone" (click)="fileInput.click()">
-        <input 
-          #fileInput 
-          type="file" 
-          accept=".pdf" 
+        <input
+          #fileInput
+          type="file"
+          accept=".pdf"
           (change)="onFileSelected($event)"
           hidden />
         <div class="upload-content">
@@ -71,7 +83,7 @@
         </button>
       </div>
 
-      <button 
+      <button
         class="btn-upload"
         (click)="uploadThesis()"
         [disabled]="!selectedFile || isUploading"
@@ -90,11 +102,102 @@
 
   <!-- History Tab -->
   <div class="tab-content" *ngIf="activeTab === 'history'">
+    <!-- Search and Filter Bar -->
+    <div class="controls-bar" *ngIf="theses.length > 0">
+      <!-- Search -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Rechercher un rapport..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()" />
+        <button
+          class="clear-search-btn"
+          *ngIf="searchQuery"
+          (click)="searchQuery = ''; onSearchChange()">
+          ✕
+        </button>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="filter-group">
+        <button
+          class="filter-btn"
+          [class.active]="selectedFilter === 'all'"
+          (click)="onFilterChange('all')">
+          <span class="filter-icon">📋</span>
+          Tous
+          <span class="filter-count">{{ getFilterCount('all') }}</span>
+        </button>
+        <button
+          class="filter-btn"
+          [class.active]="selectedFilter === 'unchecked'"
+          (click)="onFilterChange('unchecked')">
+          <span class="filter-icon">⏳</span>
+          Non vérifiés
+          <span class="filter-count">{{ getFilterCount('unchecked') }}</span>
+        </button>
+        <button
+          class="filter-btn filter-risk-high"
+          [class.active]="selectedFilter === 'high-risk'"
+          (click)="onFilterChange('high-risk')">
+          <span class="filter-icon">🔴</span>
+          Risque élevé
+          <span class="filter-count">{{ getFilterCount('high-risk') }}</span>
+        </button>
+        <button
+          class="filter-btn filter-risk-medium"
+          [class.active]="selectedFilter === 'medium-risk'"
+          (click)="onFilterChange('medium-risk')">
+          <span class="filter-icon">🟡</span>
+          Risque moyen
+          <span class="filter-count">{{ getFilterCount('medium-risk') }}</span>
+        </button>
+        <button
+          class="filter-btn filter-risk-low"
+          [class.active]="selectedFilter === 'low-risk'"
+          (click)="onFilterChange('low-risk')">
+          <span class="filter-icon">🟢</span>
+          Risque faible
+          <span class="filter-count">{{ getFilterCount('low-risk') }}</span>
+        </button>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="sort-group">
+        <label class="sort-label">
+          <span class="sort-icon">⬍⬍</span>
+          Trier par:
+        </label>
+        <select class="sort-select" [(ngModel)]="selectedSort" (change)="onSortChange(selectedSort)">
+          <option value="date-desc">Date (plus récent)</option>
+          <option value="date-asc">Date (plus ancien)</option>
+          <option value="name-asc">Nom (A-Z)</option>
+          <option value="name-desc">Nom (Z-A)</option>
+          <option value="score-desc">Score (élevé)</option>
+          <option value="score-asc">Score (faible)</option>
+        </select>
+      </div>
+
+      <!-- Clear Filters -->
+      <button
+        class="clear-filters-btn"
+        *ngIf="searchQuery || selectedFilter !== 'all' || selectedSort !== 'date-desc'"
+        (click)="clearFilters()">
+        <span class="btn-icon">↺</span>
+        Réinitialiser
+      </button>
+    </div>
+
+    <!-- Loading State -->
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner-large"></div>
       <p>Chargement des rapports...</p>
     </div>
 
+    <!-- Empty State -->
     <div class="empty-state" *ngIf="!isLoading && theses.length === 0">
       <div class="empty-icon">📭</div>
       <h3>Aucun rapport importé</h3>
@@ -104,8 +207,32 @@
       </button>
     </div>
 
-    <div class="theses-grid" *ngIf="!isLoading && theses.length > 0">
-      <div class="thesis-card" *ngFor="let thesis of theses">
+    <!-- No Results State -->
+    <div class="empty-state" *ngIf="!isLoading && theses.length > 0 && filteredTheses.length === 0">
+      <div class="empty-icon">🔍</div>
+      <h3>Aucun résultat trouvé</h3>
+      <p>Essayez de modifier vos filtres ou votre recherche</p>
+      <button class="btn-secondary" (click)="clearFilters()">
+        Réinitialiser les filtres
+      </button>
+    </div>
+
+    <!-- Theses Grid -->
+    <div class="theses-grid" *ngIf="!isLoading && filteredTheses.length > 0">
+      <div class="thesis-card" *ngFor="let thesis of filteredTheses">
+        <!-- Risk Badge -->
+        <div class="risk-badge" *ngIf="thesis.lastCheckScore !== undefined && thesis.lastCheckScore !== null"
+             [ngClass]="{
+               'risk-high': thesis.lastCheckScore >= 0.7,
+               'risk-medium': thesis.lastCheckScore >= 0.5 && thesis.lastCheckScore < 0.7,
+               'risk-low': thesis.lastCheckScore < 0.5
+             }">
+          <span class="risk-icon" *ngIf="thesis.lastCheckScore >= 0.7">⚠️</span>
+          <span class="risk-icon" *ngIf="thesis.lastCheckScore >= 0.5 && thesis.lastCheckScore < 0.7">⚡</span>
+          <span class="risk-icon" *ngIf="thesis.lastCheckScore < 0.5">✓</span>
+          {{ getScorePercentage(thesis.lastCheckScore) }}%
+        </div>
+
         <div class="thesis-header">
           <div class="thesis-info">
             <h3 class="thesis-title">{{ thesis.title }}</h3>
@@ -118,26 +245,38 @@
                 <span class="meta-icon">📄</span>
                 {{ thesis.fileName }}
               </span>
+              <span class="meta-item" *ngIf="thesis.similarityScore === undefined">
+                <span class="meta-icon status-pending">⏳</span>
+                Non vérifié
+              </span>
             </p>
           </div>
         </div>
 
         <div class="thesis-actions">
-          <button 
+          <button
             class="btn-check"
             (click)="checkThesis(thesis.id)"
-            [disabled]="isChecking">
+            [disabled]="isChecking"
+            title="Analyser ce rapport pour détecter le plagiat">
             <span class="btn-icon">🔍</span>
-            Vérifier
+            {{ thesis.similarityScore !== undefined ? 'Re-vérifier' : 'Vérifier' }}
           </button>
-          <button 
-            class="btn-report"
-            (click)="viewReport(thesis.id)">
-            <span class="btn-icon">📊</span>
-            Voir le rapport
+
+          <button
+            class="btn-delete"
+            (click)="deleteThesis(thesis.id, $event)"
+            title="Supprimer ce rapport">
+            <span class="btn-icon">🗑️</span>
+            Supprimer
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Results Counter -->
+    <div class="results-counter" *ngIf="!isLoading && theses.length > 0">
+      Affichage de {{ filteredTheses.length }} sur {{ theses.length }} rapport(s)
     </div>
   </div>
 
@@ -156,7 +295,7 @@
             <div class="score-value" [style.color]="getColor(currentReport.overallSimilarityScore)">
               {{ getScorePercentage(currentReport.overallSimilarityScore) }}%
             </div>
-            <div class="score-label">Similarité</div>
+            <div class="score-label">Similarité moyenne</div>
           </div>
           <div class="score-info">
             <h3 class="score-status" [style.color]="getColor(currentReport.overallSimilarityScore)">
@@ -164,6 +303,9 @@
             </h3>
             <p class="score-description">
               {{ currentReport.status }}
+            </p>
+            <p class="score-hint" style="font-size: 0.85em; color: #666; margin-top: 8px;">
+              Ce score représente la similarité moyenne avec les documents comparés
             </p>
           </div>
         </div>
@@ -192,19 +334,28 @@
                     {{ match.matchedStudentId }}
                   </p>
                 </div>
-                <div class="match-score" 
-                     [style.background-color]="getColor(match.similarityScore) + '20'" 
+                <div class="match-score"
+                     [style.background-color]="getColor(match.similarityScore) + '20'"
                      [style.color]="getColor(match.similarityScore)">
                   {{ getScorePercentage(match.similarityScore) }}%
                 </div>
               </div>
               <div class="match-bar">
-                <div 
-                  class="match-bar-fill" 
+                <div
+                  class="match-bar-fill"
                   [style.width.%]="getScorePercentage(match.similarityScore)"
                   [style.background-color]="getColor(match.similarityScore)">
                 </div>
               </div>
+
+              <button
+                class="btn-view-details"
+                (click)="viewDetailedAnalysis(match)"
+                [disabled]="isLoadingDetails"
+                title="Voir les sections similaires en détail">
+                <span class="btn-icon">🔬</span>
+                Voir l'analyse détaillée
+              </button>
             </div>
           </div>
         </div>
@@ -219,12 +370,152 @@
     </div>
   </div>
 
+  <!-- Detailed Analysis Modal -->
+  <div class="modal-overlay detailed-overlay" *ngIf="showDetailedAnalysis" (click)="closeDetailedAnalysis()">
+    <div class="modal-content detailed-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <span class="modal-icon">🔬</span>
+          Analyse détaillée des similarités
+        </h2>
+        <button class="modal-close" (click)="closeDetailedAnalysis()">✕</button>
+      </div>
+
+      <div class="modal-body detailed-body" *ngIf="detailedAnalysis">
+        <!-- Summary Stats -->
+        <div class="detail-stats">
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+              <div class="stat-value">{{ getScorePercentage(detailedAnalysis.overallSimilarity) }}%</div>
+              <div class="stat-label">Similarité maximale</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🔍</div>
+            <div class="stat-content">
+              <div class="stat-value">{{ detailedAnalysis.matchesFound }}</div>
+              <div class="stat-label">Sections similaires</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div class="stat-content">
+              <div class="stat-value">{{ detailedAnalysis.totalComparisons }}</div>
+              <div class="stat-label">Comparaisons effectuées</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div class="detail-info-banner">
+          <span class="info-icon">💡</span>
+          <p>Cette analyse compare votre document section par section (environ 500 mots par section) pour identifier précisément où se trouvent les similarités supérieures à 70%.</p>
+        </div>
+
+        <!-- No Matches -->
+        <div class="no-matches" *ngIf="detailedAnalysis.matchesFound === 0">
+          <div class="no-matches-icon">✨</div>
+          <h3>Aucune section fortement similaire détectée</h3>
+          <p>Aucune section ne dépasse le seuil de 70% de similarité. Les ressemblances détectées sont mineures ou correspondent à du contenu courant.</p>
+        </div>
+
+        <!-- Chunk Matches -->
+        <div class="chunks-container" *ngIf="detailedAnalysis.matchesFound > 0">
+          <h3 class="chunks-title">
+            <span class="chunks-icon">📝</span>
+            Sections similaires trouvées (≥70%)
+          </h3>
+
+          <div class="chunk-list">
+            <div class="chunk-comparison" *ngFor="let chunk of detailedAnalysis.chunks; let i = index">
+              <!-- Chunk Header -->
+              <div class="chunk-header">
+                <div class="chunk-number">#{{ i + 1 }}</div>
+                <div class="chunk-score"
+                     [style.background-color]="getChunkColor(chunk.similarity) + '20'"
+                     [style.color]="getChunkColor(chunk.similarity)">
+                  <span class="score-icon">⚡</span>
+                  {{ getScorePercentage(chunk.similarity) }}% similaire
+                </div>
+              </div>
+
+              <!-- Side-by-side comparison -->
+              <div class="chunk-content-grid">
+                <!-- Your Document -->
+                <div class="chunk-side your-doc">
+                  <div class="chunk-side-header">
+                    <span class="doc-icon">📄</span>
+                    <span class="doc-label">Votre document</span>
+                    <span class="chunk-meta">Section {{ chunk.position1.chunkIndex + 1 }} · {{ chunk.wordCount1 }} mots</span>
+                  </div>
+                  <div class="chunk-text"
+                       [style.border-left-color]="getChunkColor(chunk.similarity)">
+                    {{ chunk.text1Chunk }}
+                    <span class="text-ellipsis" *ngIf="chunk.text1Chunk.length >= 500">...</span>
+                  </div>
+                </div>
+
+                <!-- Similarity Indicator -->
+                <div class="similarity-arrow">
+                  <div class="arrow-icon" [style.color]="getChunkColor(chunk.similarity)">
+                    ⟷
+                  </div>
+                  <div class="arrow-label">{{ getScorePercentage(chunk.similarity) }}%</div>
+                </div>
+
+                <!-- Matched Document -->
+                <div class="chunk-side matched-doc">
+                  <div class="chunk-side-header">
+                    <span class="doc-icon">📋</span>
+                    <span class="doc-label">Document comparé</span>
+                    <span class="chunk-meta">Section {{ chunk.position2.chunkIndex + 1 }} · {{ chunk.wordCount2 }} mots</span>
+                  </div>
+                  <div class="chunk-text"
+                       [style.border-left-color]="getChunkColor(chunk.similarity)">
+                    {{ chunk.text2Chunk }}
+                    <span class="text-ellipsis" *ngIf="chunk.text2Chunk.length >= 500">...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Similarity Bar -->
+              <div class="chunk-similarity-bar">
+                <div class="similarity-bar-fill"
+                     [style.width.%]="getScorePercentage(chunk.similarity)"
+                     [style.background-color]="getChunkColor(chunk.similarity)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Close Action -->
+        <div class="modal-actions">
+          <button class="btn-modal-secondary" (click)="closeDetailedAnalysis()">
+            <span class="btn-icon">←</span>
+            Retour au rapport
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Checking Overlay -->
   <div class="checking-overlay" *ngIf="isChecking">
     <div class="checking-card">
       <div class="spinner-large"></div>
       <h3>Vérification en cours...</h3>
       <p>Analyse de votre rapport avec l'IA</p>
+    </div>
+  </div>
+
+  <!-- Loading Details Overlay -->
+  <div class="checking-overlay" *ngIf="isLoadingDetails">
+    <div class="checking-card">
+      <div class="spinner-large"></div>
+      <h3>Analyse détaillée en cours...</h3>
+      <p>Comparaison section par section des documents</p>
     </div>
   </div>
 </div>

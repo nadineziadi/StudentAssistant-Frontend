@@ -1,74 +1,84 @@
 <div class="verificateur-container">
+  <!-- Toast Notification -->
+  <div class="toast-container" *ngIf="showToast">
+    <div class="toast" [class.toast-success]="toastType === 'success'"
+         [class.toast-error]="toastType === 'error'"
+         [class.toast-info]="toastType === 'info'">
+      <span class="toast-icon">
+        <span *ngIf="toastType === 'success'">✓</span>
+        <span *ngIf="toastType === 'error'">⚠</span>
+        <span *ngIf="toastType === 'info'">ℹ</span>
+      </span>
+      <span class="toast-message">{{ toastMessage }}</span>
+      <button class="toast-close" (click)="showToast = false">✕</button>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="page-header">
     <div class="header-content">
       <div class="header-icon">🔍</div>
       <div class="header-text">
         <h1 class="page-title">Vérificateur d'Originalité</h1>
-        <p class="page-subtitle">Assurez l'authenticité de vos travaux académiques</p>
+        <p class="page-subtitle">Détection de plagiat par intelligence artificielle</p>
       </div>
     </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeTab === 'submit'"
       (click)="switchTab('submit')">
       <span class="tab-icon">✍️</span>
       <span>Soumettre un essai</span>
     </button>
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeTab === 'history'"
       (click)="switchTab('history')">
       <span class="tab-icon">📚</span>
-      <span>Historique</span>
+      <span>Mes essais ({{ essays.length }})</span>
     </button>
-    <!-- NOUVEAU TAB -->
-  <button 
-    class="tab-button"
-   (click)="navigateToThesis()">
-    <span class="tab-icon">📄</span>
-    <span>Rapports PDF</span>
-  </button>
-  </div>
-
-  <!-- Messages -->
-  <div class="message success-message" *ngIf="successMessage">
-    <span class="message-icon">✓</span>
-    {{ successMessage }}
-  </div>
-
-  <div class="message error-message" *ngIf="errorMessage">
-    <span class="message-icon">⚠</span>
-    {{ errorMessage }}
   </div>
 
   <!-- Submit Tab -->
   <div class="tab-content" *ngIf="activeTab === 'submit'">
     <div class="submit-card">
+      <div class="info-banner">
+        <span class="info-icon">💡</span>
+        <p>Soumettez votre travail pour vérifier son originalité. Notre système IA comparera votre texte avec tous les essais de la base de données.</p>
+      </div>
+
       <form (ngSubmit)="submitEssay()">
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">📋</span>
-            ID de l'assignation
-          </label>
-          <input
-            type="text"
-            class="form-input"
-            [(ngModel)]="assignmentId"
-            name="assignmentId"
-            placeholder="Ex: ASSIGNMENT_001"
-            required
-          />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <span class="label-icon">📚</span>
+              Matière
+            </label>
+            <select class="form-select" [(ngModel)]="subject" name="subject" required>
+              <option value="">Sélectionner...</option>
+              <option *ngFor="let s of subjects" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span class="label-icon">🌍</span>
+              Langue
+            </label>
+            <select class="form-select" [(ngModel)]="language" name="language" required>
+              <option *ngFor="let lang of languages" [value]="lang.code">{{ lang.name }}</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">
             <span class="label-icon">📝</span>
-            Titre
+            Titre <span class="required">*</span>
           </label>
           <input
             type="text"
@@ -83,25 +93,34 @@
         <div class="form-group">
           <label class="form-label">
             <span class="label-icon">📄</span>
-            Contenu
+            Contenu <span class="required">*</span>
           </label>
           <textarea
             class="form-textarea"
             [(ngModel)]="content"
             name="content"
-            placeholder="Écrivez votre essai ici..."
-            rows="12"
+            placeholder="Écrivez ou collez votre essai ici... (minimum 50 mots)"
+            rows="15"
             required
           ></textarea>
-          <div class="character-count">
-            {{ content.length }} caractères
+          <div class="textarea-footer">
+            <div class="character-count">
+              <span class="count-badge" [class.warning]="getWordCount() < 50">
+                {{ getWordCount() }} mots
+              </span>
+              <span class="count-info">{{ content.length }} caractères</span>
+            </div>
+            <div class="word-requirement" *ngIf="getWordCount() < 50">
+              <span class="warning-icon">⚠️</span>
+              Minimum 50 mots requis
+            </div>
           </div>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="btn-submit"
-          [disabled]="isSubmitting"
+          [disabled]="isSubmitting || getWordCount() < 50"
           [class.loading]="isSubmitting">
           <span *ngIf="!isSubmitting">
             <span class="btn-icon">🚀</span>
@@ -118,6 +137,30 @@
 
   <!-- History Tab -->
   <div class="tab-content" *ngIf="activeTab === 'history'">
+    <!-- Filters -->
+    <div class="filters-bar" *ngIf="essays.length > 0">
+      <div class="filter-group">
+        <label class="filter-label">Matière:</label>
+        <select class="filter-select" [(ngModel)]="filterSubject" (change)="applyFilters()">
+          <option value="">Toutes</option>
+          <option *ngFor="let s of subjects" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Statut:</label>
+        <select class="filter-select" [(ngModel)]="filterChecked" (change)="applyFilters()">
+          <option value="">Tous</option>
+          <option value="checked">Vérifiés</option>
+          <option value="unchecked">Non vérifiés</option>
+        </select>
+      </div>
+
+      <button class="btn-clear-filters" (click)="filterSubject=''; filterChecked=''; applyFilters()">
+        Réinitialiser
+      </button>
+    </div>
+
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner-large"></div>
       <p>Chargement des essais...</p>
@@ -126,22 +169,35 @@
     <div class="empty-state" *ngIf="!isLoading && essays.length === 0">
       <div class="empty-icon">📭</div>
       <h3>Aucun essai soumis</h3>
-      <p>Commencez par soumettre votre premier essai</p>
+      <p>Commencez par soumettre votre premier essai pour vérifier son originalité</p>
       <button class="btn-secondary" (click)="switchTab('submit')">
+        <span class="btn-icon">✍️</span>
         Soumettre un essai
       </button>
     </div>
 
-    <div class="essays-grid" *ngIf="!isLoading && essays.length > 0">
-      <div class="essay-card" *ngFor="let essay of essays">
+    <div class="empty-state" *ngIf="!isLoading && essays.length > 0 && filteredEssays.length === 0">
+      <div class="empty-icon">🔍</div>
+      <h3>Aucun résultat</h3>
+      <p>Aucun essai ne correspond à vos filtres</p>
+    </div>
+
+    <div class="essays-grid" *ngIf="!isLoading && filteredEssays.length > 0">
+      <div class="essay-card" *ngFor="let essay of filteredEssays">
         <div class="essay-header">
           <div class="essay-info">
             <h3 class="essay-title">{{ essay.title }}</h3>
-            <p class="essay-meta">
-              <span class="meta-item">
-                <span class="meta-icon">📋</span>
-                {{ essay.assignmentId }}
+            <div class="essay-tags">
+              <span class="tag tag-subject" *ngIf="essay.subject">
+                <span class="tag-icon">📚</span>
+                {{ essay.subject }}
               </span>
+              <span class="tag tag-language" *ngIf="essay.language">
+                <span class="tag-icon">🌍</span>
+                {{ essay.language }}
+              </span>
+            </div>
+            <p class="essay-meta">
               <span class="meta-item">
                 <span class="meta-icon">📅</span>
                 {{ formatDate(essay.submittedAt) }}
@@ -149,8 +205,8 @@
             </p>
           </div>
           <div class="essay-status">
-            <span 
-              class="status-badge" 
+            <span
+              class="status-badge"
               [class.checked]="essay.isPlagiarismChecked"
               [class.pending]="!essay.isPlagiarismChecked">
               {{ essay.isPlagiarismChecked ? '✓ Vérifié' : '⏳ En attente' }}
@@ -159,16 +215,24 @@
         </div>
 
         <div class="essay-content">
-          <p class="essay-preview">{{ essay.content.substring(0, 150) }}...</p>
+          <p class="essay-preview">{{ essay.content.substring(0, 200) }}...</p>
         </div>
 
         <div class="essay-actions">
-          <button 
+          <button
             class="btn-check"
             (click)="checkPlagiarism(essay.id)"
             [disabled]="isChecking">
             <span class="btn-icon">🔍</span>
             {{ essay.isPlagiarismChecked ? 'Re-vérifier' : 'Vérifier' }}
+          </button>
+
+          <button
+            class="btn-delete"
+            (click)="deleteEssay(essay.id, $event)"
+            title="Supprimer cet essai">
+            <span class="btn-icon">🗑️</span>
+            Supprimer
           </button>
         </div>
       </div>
@@ -179,71 +243,205 @@
   <div class="modal-overlay" *ngIf="showResult" (click)="closeResult()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">Résultats de la vérification</h2>
+        <h2 class="modal-title">
+          <span class="modal-icon">📊</span>
+          Résultats de la vérification
+        </h2>
         <button class="modal-close" (click)="closeResult()">✕</button>
       </div>
 
       <div class="modal-body" *ngIf="plagiarismResult">
-        <!-- Score Overview -->
-        <div class="score-card">
-          <div class="score-circle" [style.border-color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
-            <div class="score-value" [style.color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
-              {{ getScorePercentage(plagiarismResult.overallPlagiarismScore) }}%
+        <!-- Score Overview Card -->
+        <div class="score-card" [style.border-color]="getRiskColor(plagiarismResult.riskLevel)">
+          <div class="score-main">
+            <div class="score-circle" [style.border-color]="getRiskColor(plagiarismResult.riskLevel)">
+              <div class="score-value" [style.color]="getRiskColor(plagiarismResult.riskLevel)">
+                {{ getScorePercentage(plagiarismResult.overallPlagiarismScore) }}%
+              </div>
+              <div class="score-label">Similarité max</div>
             </div>
-            <div class="score-label">Similarité</div>
+            <div class="score-info">
+              <h3 class="score-status" [style.color]="getRiskColor(plagiarismResult.riskLevel)">
+                <span class="risk-icon">{{ getRiskIcon(plagiarismResult.riskLevel) }}</span>
+                Risque {{ getRiskLabel(plagiarismResult.riskLevel) }}
+              </h3>
+              <p class="score-description">{{ plagiarismResult.status }}</p>
+              <div class="comparison-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ plagiarismResult.matches?.length || 0 }}</span>
+                  <span class="stat-label">Similarités</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="score-info">
-            <h3 class="score-status" [style.color]="getSimilarityColor(plagiarismResult.overallPlagiarismScore)">
-              {{ getSimilarityLabel(plagiarismResult.overallPlagiarismScore) }}
-            </h3>
-            <p class="score-description">
-              {{ plagiarismResult.status }}
+        </div>
+
+        <!-- Risk Level Explanation -->
+        <div class="risk-explanation" [style.border-left-color]="getRiskColor(plagiarismResult.riskLevel)">
+          <div class="risk-header">
+            <span class="risk-title">Que signifie ce score ?</span>
+          </div>
+          <ul class="risk-list">
+            <li *ngIf="plagiarismResult.riskLevel === 'CRITICAL'">
+              <strong>Critique (≥95%):</strong> Similarité très élevée. Révision immédiate nécessaire.
+            </li>
+            <li *ngIf="plagiarismResult.riskLevel === 'HIGH'">
+              <strong>Élevé (85-94%):</strong> Similarités importantes détectées. Vérification recommandée.
+            </li>
+            <li *ngIf="plagiarismResult.riskLevel === 'MODERATE'">
+              <strong>Modéré (70-84%):</strong> Certaines similarités présentes. À examiner.
+            </li>
+            <li *ngIf="plagiarismResult.riskLevel === 'LOW'">
+              <strong>Faible (50-69%):</strong> Similarités mineures. Probablement acceptable.
+            </li>
+            <li *ngIf="plagiarismResult.riskLevel === 'NONE'">
+              <strong>Aucun (&lt;50%):</strong> Pas de plagiat significatif détecté.
+            </li>
+          </ul>
+        </div>
+
+        <!-- AI Recommendations Section -->
+        <div class="recommendations-section" *ngIf="plagiarismResult.recommendations && plagiarismResult.recommendations.length > 0">
+          <div class="recommendations-header">
+            <span class="recommendations-icon">🤖</span>
+            <h3 class="recommendations-title">Recommandations de l'IA</h3>
+            <span class="recommendations-badge">Gemini AI</span>
+          </div>
+
+          <div class="recommendations-intro" [style.border-left-color]="getRiskColor(plagiarismResult.riskLevel)">
+            <p>
+              <strong>Conseils personnalisés</strong> pour améliorer l'originalité de votre travail basés sur votre score de plagiat et votre niveau de risque.
             </p>
+          </div>
+
+          <div class="recommendations-list">
+            <div class="recommendation-item" *ngFor="let rec of plagiarismResult.recommendations; let i = index">
+              <div class="recommendation-number">{{ i + 1 }}</div>
+              <div class="recommendation-content">
+                <p>{{ rec }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reformulation Examples Section -->
+        <div class="reformulation-section" *ngIf="plagiarismResult.reformulationExamples && plagiarismResult.reformulationExamples.length > 0">
+          <div class="reformulation-header">
+            <span class="reformulation-icon">✏️</span>
+            <h3 class="reformulation-title">Exemples de Reformulation</h3>
+            <span class="reformulation-badge">Suggestions Pratiques</span>
+          </div>
+
+          <div class="reformulation-intro">
+            <p>
+              <strong>Exemples concrets</strong> pour vous aider à reformuler votre texte de manière originale tout en conservant le sens.
+            </p>
+          </div>
+
+          <div class="reformulation-list">
+            <div class="reformulation-card" *ngFor="let example of plagiarismResult.reformulationExamples; let i = index">
+              <div class="reformulation-number">{{ i + 1 }}</div>
+              <div class="reformulation-content">
+                <!-- Original Text -->
+                <div class="reformulation-block original">
+                  <div class="block-label">
+                    <span class="block-icon">📝</span>
+                    <span class="block-title">Original</span>
+                  </div>
+                  <p class="block-text">{{ example.original }}</p>
+                </div>
+
+                <!-- Arrow Icon -->
+                <div class="reformulation-arrow">
+                  <span class="arrow-icon">→</span>
+                </div>
+
+                <!-- Reformulated Text -->
+                <div class="reformulation-block reformulated">
+                  <div class="block-label">
+                    <span class="block-icon">✨</span>
+                    <span class="block-title">Reformulé</span>
+                  </div>
+                  <p class="block-text">{{ example.reformulated }}</p>
+                </div>
+
+                <!-- Explanation -->
+                <div class="reformulation-explanation">
+                  <span class="explanation-icon">💡</span>
+                  <span class="explanation-text">{{ example.explanation }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fallback message if no recommendations AND no reformulation examples -->
+        <div class="no-recommendations" *ngIf="(!plagiarismResult.recommendations || plagiarismResult.recommendations.length === 0) && (!plagiarismResult.reformulationExamples || plagiarismResult.reformulationExamples.length === 0)">
+          <div class="info-banner">
+            <span class="info-icon">ℹ️</span>
+            <p>Les recommandations et exemples de l'IA ne sont pas disponibles pour le moment. Veuillez consulter les résultats ci-dessus.</p>
           </div>
         </div>
 
         <!-- No Matches -->
-        <div class="no-matches" *ngIf="plagiarismResult.matches.length === 0">
+        <div class="no-matches" *ngIf="plagiarismResult.matches && plagiarismResult.matches.length === 0">
           <div class="no-matches-icon">✨</div>
-          <h3>Aucune similarité détectée</h3>
-          <p>Votre travail semble original. Aucun contenu similaire n'a été trouvé dans notre base de données.</p>
+          <h3>Excellent travail !</h3>
+          <p>Aucune similarité significative détectée. Votre travail semble original.</p>
         </div>
 
         <!-- Matches List -->
-        <div class="matches-section" *ngIf="plagiarismResult.matches.length > 0">
+        <div class="matches-section" *ngIf="plagiarismResult.matches && plagiarismResult.matches.length > 0">
           <h3 class="matches-title">
-            <span class="matches-icon">⚠️</span>
-            Contenus similaires détectés ({{ plagiarismResult.matches.length }})
+            <span class="matches-icon">{{ getRiskIcon(plagiarismResult.riskLevel) }}</span>
+            Documents similaires trouvés ({{ plagiarismResult.matches.length }})
           </h3>
 
           <div class="matches-list">
-            <div class="match-card" *ngFor="let match of plagiarismResult.matches">
-              <div class="match-header">
-                <div class="match-info">
-                  <h4 class="match-title">{{ match.title }}</h4>
-                  <p class="match-author">
-                    <span class="author-icon">👤</span>
-                    {{ match.matchedStudentId }}
-                  </p>
+            <div class="match-card" *ngFor="let match of plagiarismResult.matches; let i = index">
+              <div class="match-number">{{ i + 1 }}</div>
+              <div class="match-content">
+                <div class="match-header">
+                  <div class="match-info">
+                    <h4 class="match-title">{{ match.title }}</h4>
+                    <div class="match-meta">
+                      <span class="match-meta-item">
+                        <span class="meta-icon">👤</span>
+                        {{ match.matchedStudentId }}
+                      </span>
+                      <span class="match-meta-item" *ngIf="match.subject">
+                        <span class="meta-icon">📚</span>
+                        {{ match.subject }}
+                      </span>
+                      <span class="match-meta-item" *ngIf="match.language">
+                        <span class="meta-icon">🌍</span>
+                        {{ match.language }}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    class="match-score"
+                    [style.background-color]="getRiskColor(match.similarityScore >= 0.95 ? 'CRITICAL' : match.similarityScore >= 0.85 ? 'HIGH' : match.similarityScore >= 0.7 ? 'MODERATE' : 'LOW') + '20'"
+                    [style.color]="getRiskColor(match.similarityScore >= 0.95 ? 'CRITICAL' : match.similarityScore >= 0.85 ? 'HIGH' : match.similarityScore >= 0.7 ? 'MODERATE' : 'LOW')">
+                    {{ getScorePercentage(match.similarityScore) }}%
+                  </div>
                 </div>
-                <div class="match-score" [style.background-color]="getSimilarityColor(match.similarityScore) + '20'" [style.color]="getSimilarityColor(match.similarityScore)">
-                  {{ getScorePercentage(match.similarityScore) }}%
-                </div>
-              </div>
-              <div class="match-bar">
-                <div 
-                  class="match-bar-fill" 
-                  [style.width.%]="getScorePercentage(match.similarityScore)"
-                  [style.background-color]="getSimilarityColor(match.similarityScore)">
+                <div class="match-bar">
+                  <div
+                    class="match-bar-fill"
+                    [style.width.%]="getScorePercentage(match.similarityScore)"
+                    [style.background-color]="getRiskColor(match.similarityScore >= 0.95 ? 'CRITICAL' : match.similarityScore >= 0.85 ? 'HIGH' : match.similarityScore >= 0.7 ? 'MODERATE' : 'LOW')">
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Modal Actions -->
         <div class="modal-actions">
           <button class="btn-modal-primary" (click)="closeResult()">
+            <span class="btn-icon">✓</span>
             Compris
           </button>
         </div>
@@ -256,7 +454,19 @@
     <div class="checking-card">
       <div class="spinner-large"></div>
       <h3>Vérification en cours...</h3>
-      <p>Analyse de votre essai avec l'IA</p>
+      <p>Analyse de votre essai avec notre IA</p>
+      <div class="checking-steps">
+        <div class="step">✓ Génération des embeddings</div>
+        <div class="step">⏳ Comparaison avec la base de données</div>
+        <div class="step">⏳ Calcul des scores de similarité</div>
+        <div class="step">⏳ Génération des recommandations IA</div>
+      </div>
     </div>
   </div>
+
+  <!-- Floating Action Button for PDF Reports -->
+  <button class="fab-pdf" (click)="navigateToThesis()" title="Vérifier un rapport PDF">
+    <span class="fab-icon">📄</span>
+    <span class="fab-tooltip">Rapports PDF</span>
+  </button>
 </div>
