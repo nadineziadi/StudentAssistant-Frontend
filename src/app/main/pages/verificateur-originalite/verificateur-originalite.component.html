@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  <!-- Tabs (Removed PDF Reports tab) -->
+  <!-- Tabs -->
   <div class="tabs">
     <button 
       class="tab-button" 
@@ -268,13 +268,8 @@
               <p class="score-description">{{ plagiarismResult.status }}</p>
               <div class="comparison-stats">
                 <div class="stat-item">
-                  <span class="stat-value">{{ plagiarismResult.matchesFound }}</span>
+                  <span class="stat-value">{{ plagiarismResult.matches?.length || 0 }}</span>
                   <span class="stat-label">Similarités</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ plagiarismResult.totalEssaysCompared }}</span>
-                  <span class="stat-label">Comparés</span>
                 </div>
               </div>
             </div>
@@ -305,18 +300,101 @@
           </ul>
         </div>
 
+        <!-- AI Recommendations Section -->
+        <div class="recommendations-section" *ngIf="plagiarismResult.recommendations && plagiarismResult.recommendations.length > 0">
+          <div class="recommendations-header">
+            <span class="recommendations-icon">🤖</span>
+            <h3 class="recommendations-title">Recommandations de l'IA</h3>
+            <span class="recommendations-badge">Gemini AI</span>
+          </div>
+          
+          <div class="recommendations-intro" [style.border-left-color]="getRiskColor(plagiarismResult.riskLevel)">
+            <p>
+              <strong>Conseils personnalisés</strong> pour améliorer l'originalité de votre travail basés sur votre score de plagiat et votre niveau de risque.
+            </p>
+          </div>
+
+          <div class="recommendations-list">
+            <div class="recommendation-item" *ngFor="let rec of plagiarismResult.recommendations; let i = index">
+              <div class="recommendation-number">{{ i + 1 }}</div>
+              <div class="recommendation-content">
+                <p>{{ rec }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reformulation Examples Section -->
+        <div class="reformulation-section" *ngIf="plagiarismResult.reformulationExamples && plagiarismResult.reformulationExamples.length > 0">
+          <div class="reformulation-header">
+            <span class="reformulation-icon">✏️</span>
+            <h3 class="reformulation-title">Exemples de Reformulation</h3>
+            <span class="reformulation-badge">Suggestions Pratiques</span>
+          </div>
+          
+          <div class="reformulation-intro">
+            <p>
+              <strong>Exemples concrets</strong> pour vous aider à reformuler votre texte de manière originale tout en conservant le sens.
+            </p>
+          </div>
+
+          <div class="reformulation-list">
+            <div class="reformulation-card" *ngFor="let example of plagiarismResult.reformulationExamples; let i = index">
+              <div class="reformulation-number">{{ i + 1 }}</div>
+              <div class="reformulation-content">
+                <!-- Original Text -->
+                <div class="reformulation-block original">
+                  <div class="block-label">
+                    <span class="block-icon">📝</span>
+                    <span class="block-title">Original</span>
+                  </div>
+                  <p class="block-text">{{ example.original }}</p>
+                </div>
+
+                <!-- Arrow Icon -->
+                <div class="reformulation-arrow">
+                  <span class="arrow-icon">→</span>
+                </div>
+
+                <!-- Reformulated Text -->
+                <div class="reformulation-block reformulated">
+                  <div class="block-label">
+                    <span class="block-icon">✨</span>
+                    <span class="block-title">Reformulé</span>
+                  </div>
+                  <p class="block-text">{{ example.reformulated }}</p>
+                </div>
+
+                <!-- Explanation -->
+                <div class="reformulation-explanation">
+                  <span class="explanation-icon">💡</span>
+                  <span class="explanation-text">{{ example.explanation }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fallback message if no recommendations AND no reformulation examples -->
+        <div class="no-recommendations" *ngIf="(!plagiarismResult.recommendations || plagiarismResult.recommendations.length === 0) && (!plagiarismResult.reformulationExamples || plagiarismResult.reformulationExamples.length === 0)">
+          <div class="info-banner">
+            <span class="info-icon">ℹ️</span>
+            <p>Les recommandations et exemples de l'IA ne sont pas disponibles pour le moment. Veuillez consulter les résultats ci-dessus.</p>
+          </div>
+        </div>
+
         <!-- No Matches -->
-        <div class="no-matches" *ngIf="plagiarismResult.matchesFound === 0">
+        <div class="no-matches" *ngIf="plagiarismResult.matches && plagiarismResult.matches.length === 0">
           <div class="no-matches-icon">✨</div>
           <h3>Excellent travail !</h3>
           <p>Aucune similarité significative détectée. Votre travail semble original.</p>
         </div>
 
         <!-- Matches List -->
-        <div class="matches-section" *ngIf="plagiarismResult.matchesFound > 0">
+        <div class="matches-section" *ngIf="plagiarismResult.matches && plagiarismResult.matches.length > 0">
           <h3 class="matches-title">
             <span class="matches-icon">{{ getRiskIcon(plagiarismResult.riskLevel) }}</span>
-            Documents similaires trouvés ({{ plagiarismResult.matchesFound }})
+            Documents similaires trouvés ({{ plagiarismResult.matches.length }})
           </h3>
 
           <div class="matches-list">
@@ -381,6 +459,7 @@
         <div class="step">✓ Génération des embeddings</div>
         <div class="step">⏳ Comparaison avec la base de données</div>
         <div class="step">⏳ Calcul des scores de similarité</div>
+        <div class="step">⏳ Génération des recommandations IA</div>
       </div>
     </div>
   </div>

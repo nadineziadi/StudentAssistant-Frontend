@@ -25,6 +25,12 @@ interface MatchDetail {
   language?: string;
 }
 
+interface ReformulationExample {
+  original: string;
+  reformulated: string;
+  explanation: string;
+}
+
 interface PlagiarismCheckResponse {
   essayId: number;
   overallPlagiarismScore: number;
@@ -33,6 +39,8 @@ interface PlagiarismCheckResponse {
   matchesFound: number;
   totalEssaysCompared: number;
   status: string;
+  recommendations?: string[];
+  reformulationExamples?: ReformulationExample[];
 }
 
 @Component({
@@ -246,6 +254,13 @@ export class VerificateurOriginaliteComponent implements OnInit {
         this.showResult = true;
         this.isChecking = false;
         this.loadEssays();
+        
+        // Log reformulation examples for debugging
+        if (result.reformulationExamples && result.reformulationExamples.length > 0) {
+          console.log('Reformulation examples received:', result.reformulationExamples);
+        } else {
+          console.log('No reformulation examples in response');
+        }
       },
       error: (error) => {
         this.isChecking = false;
