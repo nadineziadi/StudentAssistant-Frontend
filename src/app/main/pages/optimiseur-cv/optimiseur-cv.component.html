@@ -1,1 +1,71 @@
-<p>optimiseur-cv works!</p>
+<div class="container">
+  <h2>🎯 Optimiseur de CV Intelligent</h2>
+  <p class="subtitle">Analyse et amélioration automatique de votre CV</p>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="error-banner">
+    ⚠️ {{ error }}
+  </div>
+
+  <!-- Input Texte -->
+  <div class="input-card">
+    <h3>📝 Coller votre CV</h3>
+    <textarea
+      [(ngModel)]="cvText"
+      rows="10"
+      placeholder="Collez ici le texte complet de votre CV..."
+      [disabled]="loading">
+    </textarea>
+    <button
+      (click)="submitText()"
+      [disabled]="loading || !cvText.trim()"
+      class="btn-primary">
+      {{ loading ? '⏳ Analyse en cours...' : '🚀 Analyser mon CV' }}
+    </button>
+  </div>
+
+  <div class="separator"><span>OU</span></div>
+
+  <!-- Input Fichier -->
+  <div class="input-card">
+    <h3>📄 Télécharger votre CV</h3>
+    <div class="file-zone">
+      <input
+        type="file"
+        (change)="onFileSelected($event)"
+        accept=".pdf,.docx,.txt"
+        [disabled]="loading"
+        id="fileInput" />
+      <label for="fileInput">
+        📎 {{ selectedFile ? selectedFile.name : 'Choisir un fichier (PDF, DOCX, TXT)' }}
+      </label>
+    </div>
+    <button
+      (click)="submitFile()"
+      [disabled]="loading || !selectedFile"
+      class="btn-primary">
+      {{ loading ? '⏳ Analyse en cours...' : '🚀 Analyser le fichier' }}
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-box">
+    <div class="spinner"></div>
+    <p>🤖 Analyse en cours par l'IA...</p>
+    <p class="small">Cela peut prendre quelques secondes</p>
+  </div>
+
+  <!-- Résultat -->
+  <div *ngIf="result && !loading && hasAnalysis()" class="result-box">
+    <div class="result-header">
+      <h3>✨ Analyse de votre CV</h3>
+      <div class="actions">
+        <button (click)="copyToClipboard()" class="btn-icon">📋</button>
+        <button (click)="downloadAnalysis()" class="btn-icon">💾</button>
+      </div>
+    </div>
+    <div class="result-content">
+      <pre>{{ getAnalysisText() }}</pre>
+    </div>
+  </div>
+</div>
