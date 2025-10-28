@@ -49,6 +49,18 @@ export interface ParaphraseResponse {
   reformulations: string[];
 }
 
+export interface StyleAdaptationResponse {
+  original: string;
+  corrected_text: string;
+  paraphrased_text: string;
+  style: string;
+  adapted_text: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+
 @Injectable({
   providedIn: 'root'
 })
@@ -56,6 +68,8 @@ export class RedactionService {
   private apiUrl = 'http://localhost:8222/api/redaction';
 
   constructor(private http: HttpClient) {}
+
+
 
   // Get headers with JWT token
   private getHeaders(): HttpHeaders {
@@ -161,4 +175,11 @@ export class RedactionService {
       { text }
     );
   }
+
+   adaptStyle(text: string, style: string): Observable<StyleAdaptationResponse> {
+    return this.http.post<StyleAdaptationResponse>(
+      `${this.apiUrl}/style-adaptation`,
+      { text, style }
+    );
+}
 }

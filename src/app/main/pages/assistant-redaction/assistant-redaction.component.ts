@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { RedactionService, CorrectionResponse, GrammarCorrectionResponse, TranslationResponse, ParaphraseResponse, Document } from '../../../services/redaction.service';
+
+import { RedactionService, CorrectionResponse, GrammarCorrectionResponse, TranslationResponse, ParaphraseResponse, Document, StyleAdaptationResponse } from '../../../services/redaction.service';
 
 interface Suggestion {
   type: 'grammar' | 'style' | 'orthography' | 'spelling' | 'punctuation' | 'vocabulary';
@@ -12,6 +13,7 @@ interface Suggestion {
   };
 }
 
+
 @Component({
   selector: 'app-assistant-redaction',
   templateUrl: './assistant-redaction.component.html',
@@ -19,7 +21,25 @@ interface Suggestion {
 })
 export class AssistantRedactionComponent implements OnInit {
   // Navigation - Ajout de l'onglet historique
-  activeMainTab: 'correction' | 'grammar' | 'translation' | 'paraphrase' | 'history' = 'correction';
+
+
+ // Ajouter dans les propriétés existantes
+  activeMainTab: 'correction' | 'grammar' | 'translation' | 'paraphrase' | 'history' | 'style' = 'correction';
+
+  // NOUVEAU : Adaptation de style
+  styleInputText: string = '';
+  selectedStyle: string = 'académique';
+  styleAdaptationResults: any = null;
+  isStyleAdaptationProcessing: boolean = false;
+
+  // Styles disponibles
+  availableStyles = [
+    { value: 'académique', label: 'Académique', icon: '🎓', description: 'Formel, précis, vocabulaire avancé' },
+    { value: 'créatif', label: 'Créatif', icon: '🎨', description: 'Imaginatif, expressif, original' },
+    { value: 'journalistique', label: 'Journalistique', icon: '📰', description: 'Clair, concis, engageant' },
+    { value: 'professionnel', label: 'Professionnel', icon: '💼', description: 'Poli, business-like, soigné' },
+    { value: 'email', label: 'Email', icon: '📧', description: 'Formel, poli, concis' }
+  ];
 
   // Correction complète
   activeInputTab: 'text' | 'file' = 'text';
@@ -84,6 +104,57 @@ export class AssistantRedactionComponent implements OnInit {
   closeToast(): void {
     this.showToast = false;
   }
+
+ adaptStyle(): void {
+    if (!this.styleInputText.trim()) {
+      this.showToastNotification('Veuillez entrer du texte', 'error');
+      return;
+    }
+
+    this.isStyleAdaptationProcessing = true;
+    this.styleAdaptationResults = null;
+
+    this.redactionService.adaptStyle(this.styleInputText, this.selectedStyle)
+      .subscribe({
+        next: (response) => {
+          this.styleAdaptationResults = response;
+          this.isStyleAdaptationProcessing = false;
+          this.showToastNotification(`Texte adapté au style ${this.selectedStyle}`, 'success');
+        },
+        error: (error) => {
+          console.error('Error adapting style:', error);
+          this.showToastNotification('Erreur lors de l\'adaptation de style', 'error');
+          this.isStyleAdaptationProcessing = false;
+        }
+      });
+  }
+
+  copyStyleText(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.showToastNotification('Texte copié', 'success');
+    });
+  }
+
+  clearStyle(): void {
+    this.styleInputText = '';
+    this.styleAdaptationResults = null;
+    this.selectedStyle = 'académique';
+  }
+
+  getStyleIcon(styleValue: string): string {
+    const style = this.availableStyles.find(s => s.value === styleValue);
+    return style ? style.icon : '🎭';
+  }
+
+  getStyleLabel(styleValue: string): string {
+    const style = this.availableStyles.find(s => s.value === styleValue);
+    return style ? style.label : styleValue;
+  }
+
+
+
+
+
 
   // ========================================
   // NOUVEAU : HISTORIQUE DES DOCUMENTS
@@ -504,4 +575,6 @@ export class AssistantRedactionComponent implements OnInit {
     this.paraphraseInputText = '';
     this.paraphraseResults = [];
   }
+
+
 }

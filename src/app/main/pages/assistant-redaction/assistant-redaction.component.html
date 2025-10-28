@@ -44,6 +44,15 @@
         <span class="tab-desc">Analyse approfondie</span>
       </div>
     </button>
+    <!-- Dans la section MAIN NAVIGATION TABS -->
+<button class="main-tab-btn" [class.active]="activeMainTab === 'style'"
+  (click)="activeMainTab = 'style'">
+  <span class="tab-icon">🎭</span>
+  <div class="tab-text">
+    <span class="tab-title">Adaptation Style</span>
+    <span class="tab-desc">Personnalisation</span>
+  </div>
+</button>
     <button class="main-tab-btn" [class.active]="activeMainTab === 'grammar'"
       (click)="activeMainTab = 'grammar'">
       <span class="tab-icon">⚡</span>
@@ -386,6 +395,135 @@
   </div>
 
   <!-- PARAPHRASE -->
+
+  <!-- ADAPTATION DE STYLE -->
+<div class="style-adaptation-container" *ngIf="activeMainTab === 'style'">
+  <div class="section-card full-width">
+    <div class="card-header">
+      <h2 class="section-title">🎭 Adaptation de Style</h2>
+      <span class="section-badge">Personnalisation avancée</span>
+    </div>
+
+    <!-- Sélection du style -->
+    <div class="style-selection-section">
+      <label class="grammar-label">
+        <span class="label-icon">🎯</span>
+        Choisir un style
+      </label>
+      <div class="style-grid">
+        <button class="style-card"
+                *ngFor="let style of availableStyles"
+                [class.active]="selectedStyle === style.value"
+                (click)="selectedStyle = style.value">
+          <span class="style-icon">{{ style.icon }}</span>
+          <span class="style-name">{{ style.label }}</span>
+          <span class="style-desc">{{ style.description }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Zone de texte -->
+    <div class="style-input-section">
+      <label class="grammar-label">
+        <span class="label-icon">✍️</span>
+        Texte à adapter
+      </label>
+      <textarea class="text-input"
+                placeholder="Entre ton texte à adapter..."
+                rows="8"
+                [(ngModel)]="styleInputText"></textarea>
+      <div class="input-info">
+        <span class="char-count">{{ styleInputText?.length || 0 }} caractères</span>
+      </div>
+    </div>
+
+    <!-- Bouton de génération -->
+    <button class="generate-btn"
+            [disabled]="isStyleAdaptationProcessing || !styleInputText.trim()"
+            (click)="adaptStyle()">
+      <span *ngIf="!isStyleAdaptationProcessing">🎭 Adapter le style</span>
+      <span *ngIf="isStyleAdaptationProcessing" class="loading-content">
+        <span class="spinner"></span>
+        Adaptation en cours...
+      </span>
+    </button>
+
+    <!-- Résultats -->
+    <div class="style-results" *ngIf="styleAdaptationResults && !isStyleAdaptationProcessing">
+      <h3 class="results-title">✨ Résultats de l'adaptation</h3>
+
+      <div class="result-steps">
+        <!-- Étape 1: Correction -->
+        <div class="result-step">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <span class="step-title">Correction grammaticale</span>
+            <button class="copy-btn-small" (click)="copyStyleText(styleAdaptationResults.corrected_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text">{{ styleAdaptationResults.corrected_text }}</p>
+          </div>
+        </div>
+
+        <!-- Étape 2: Paraphrase -->
+        <div class="result-step">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <span class="step-title">Paraphrase</span>
+            <button class="copy-btn-small" (click)="copyStyleText(styleAdaptationResults.paraphrased_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text">{{ styleAdaptationResults.paraphrased_text }}</p>
+          </div>
+        </div>
+
+        <!-- Étape 3: Adaptation finale -->
+        <div class="result-step final-step">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <span class="step-title">Style {{ getStyleLabel(styleAdaptationResults.style) }}</span>
+            <button class="copy-btn-small primary" (click)="copyStyleText(styleAdaptationResults.adapted_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text adapted">{{ styleAdaptationResults.adapted_text }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- État vide -->
+    <div class="empty-state" *ngIf="!styleAdaptationResults && !isStyleAdaptationProcessing">
+      <span class="empty-icon">🎭</span>
+      <p class="empty-text">Tes adaptations de style apparaîtront ici</p>
+      <p class="empty-subtext">Choisis un style et entre du texte pour commencer</p>
+    </div>
+
+    <!-- État chargement -->
+    <div class="loading-state" *ngIf="isStyleAdaptationProcessing">
+      <div class="loading-animation">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <p class="loading-text">Adaptation du style en cours...</p>
+      <p class="loading-subtext">Correction → Paraphrase → Adaptation</p>
+    </div>
+
+    <!-- Bouton effacer -->
+    <button class="action-btn secondary full-width-btn"
+            *ngIf="styleAdaptationResults"
+            (click)="clearStyle()">
+      <span>🗑️</span>
+      Effacer tout
+    </button>
+  </div>
+</div>
   <div class="paraphrase-container" *ngIf="activeMainTab === 'paraphrase'">
     <div class="section-card full-width">
       <div class="card-header">
