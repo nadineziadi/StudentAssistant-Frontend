@@ -1,3 +1,7 @@
+"""
+Flask app for CV analysis with optimized Ollama integration
+"""
+
 import io
 import json
 from typing import Tuple
@@ -68,7 +72,6 @@ def call_ollama_cv_model(prompt_text: str, model: str = OLLAMA_MODEL, timeout: i
     """
     Calls Ollama API with optimized prompt - TIMEOUT INCREASED TO 300s
     """
-    # PROMPT SIMPLIFIÉ ET PLUS COURT POUR RÉPONSE RAPIDE
     prompt = f"""Analyse ce CV en français de manière concise et claire.
 
 CV : {prompt_text}
@@ -92,7 +95,7 @@ Sois concis et professionnel."""
         "stream": False,
         "options": {
             "temperature": 0.3,
-            "num_predict": 800,  # Limité pour réponse plus rapide
+            "num_predict": 800,
             "top_k": 20,
             "top_p": 0.9
         }
@@ -104,10 +107,10 @@ Sois concis et professionnel."""
         resp = requests.post(
             OLLAMA_API_URL,
             json=payload,
-            timeout=timeout  # Timeout augmenté à 300s (5 min)
+            timeout=timeout
         )
     except requests.Timeout:
-        raise RuntimeError(f"⏱️ Ollama timeout après {timeout}s. Le modèle est trop lent. Essayez un modèle plus petit.")
+        raise RuntimeError(f"⏱️ Ollama timeout après {timeout}s. Essayez un modèle plus petit.")
     except requests.RequestException as e:
         raise RuntimeError(f"❌ Erreur connexion Ollama: {e}")
 
@@ -128,7 +131,6 @@ Sois concis et professionnel."""
 def health():
     """Health check endpoint"""
     try:
-        # Test Ollama connection
         resp = requests.get("http://localhost:11434/api/tags", timeout=5)
         ollama_status = "connected" if resp.status_code == 200 else "error"
     except:

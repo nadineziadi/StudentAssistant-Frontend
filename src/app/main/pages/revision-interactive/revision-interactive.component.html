@@ -1,1 +1,192 @@
-<p>revision-interactive works!</p>
+<div class="revision-container">
+  <div class="revision-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <span class="header-icon">🎯</span>
+      </div>
+      <div class="header-text">
+        <h1 class="page-title">Révision Interactive</h1>
+        <p class="page-subtitle">Génère des questions et teste tes connaissances</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="revision-workspace" *ngIf="chapters.length === 0">
+    <div class="upload-section">
+      <div class="section-card">
+        <div class="card-header">
+          <h2 class="section-title">📚 Importe ton cours</h2>
+          <span class="section-badge">Étape 1</span>
+        </div>
+
+        <div class="tab-content">
+          <div class="upload-zone" (click)="fileInput.click()">
+            <input
+              #fileInput
+              type="file"
+              class="file-input"
+              accept=".pdf,.docx,.txt,.doc"
+              (change)="onFileSelected($event)"
+              hidden
+            />
+            <div class="upload-content">
+              <span class="upload-icon">📁</span>
+              <p class="upload-text">
+                <strong>Clique pour choisir un fichier</strong> ou glisse-le ici
+              </p>
+              <p class="upload-formats">PDF, DOCX, TXT, DOC (Max 10MB)</p>
+            </div>
+          </div>
+
+          <div class="selected-file" *ngIf="selectedFile">
+            <div class="file-info">
+              <span class="file-icon">📄</span>
+              <div class="file-details">
+                <p class="file-name">{{ selectedFile.name }}</p>
+                <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+              </div>
+            </div>
+            <button class="remove-file-btn" (click)="removeFile()">
+              <span>✕</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="generate-btn" [disabled]="isGenerating || !selectedFile" (click)="generateQuestions()">
+          <span *ngIf="!isGenerating">🎲 Générer les questions</span>
+          <span *ngIf="isGenerating" class="loading-content">
+            <span class="spinner"></span>
+            Génération en cours...
+          </span>
+        </button>
+      </div>
+
+      <div class="info-cards">
+        <div class="info-card">
+          <span class="info-icon">✨</span>
+          <h3>Automatique</h3>
+          <p>Les questions sont générées automatiquement selon le contenu</p>
+        </div>
+        <div class="info-card">
+          <span class="info-icon">🎯</span>
+          <h3>Organisé</h3>
+          <p>Questions structurées par chapitres et modules</p>
+        </div>
+        <div class="info-card">
+          <span class="info-icon">📊</span>
+          <h3>Résultats</h3>
+          <p>Suivi de progression et score détaillé</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Section -->
+  <div class="quiz-section" *ngIf="chapters.length > 0 && !showResults">
+    <div class="quiz-header-info">
+      <div class="quiz-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="progress"></div>
+        </div>
+        <p class="progress-text">{{ progress | number:'1.0-0' }}% complété</p>
+      </div>
+      <div class="chapter-indicator">
+        <span class="chapter-badge">{{ currentChapter?.chapter }}</span>
+        <span class="question-counter">Question {{ currentQuestionIndex + 1 }} / {{ currentChapter?.questions?.length }}</span>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <div class="question-header">
+        <span class="question-icon">❓</span>
+        <h2 class="question-text">{{ currentQuestion?.question }}</h2>
+      </div>
+
+      <div class="options-container">
+        <button
+          *ngFor="let option of currentQuestion?.options; let i = index"
+          class="option-btn"
+          [class.selected]="currentQuestion?.userAnswer === i"
+          (click)="selectAnswer(i)"
+        >
+          <span class="option-letter">{{ ['A', 'B', 'C', 'D'][i] }}</span>
+          <span class="option-text">{{ option }}</span>
+          <span class="check-icon" *ngIf="currentQuestion?.userAnswer === i">✓</span>
+        </button>
+      </div>
+
+      <div class="navigation-buttons">
+        <button
+          class="nav-btn secondary"
+          [disabled]="currentChapterIndex === 0 && currentQuestionIndex === 0"
+          (click)="previousQuestion()"
+        >
+          ← Précédent
+        </button>
+        <button
+          class="nav-btn primary"
+          [disabled]="currentQuestion?.userAnswer === undefined"
+          (click)="nextQuestion()"
+        >
+          <span *ngIf="currentQuestionIndex < (currentChapter?.questions?.length || 0) - 1 || currentChapterIndex < chapters.length - 1">
+            Suivant →
+          </span>
+          <span *ngIf="currentQuestionIndex === (currentChapter?.questions?.length || 0) - 1 && currentChapterIndex === chapters.length - 1">
+            Terminer 🎉
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" *ngIf="showResults">
+    <div class="results-card">
+      <div class="results-header">
+        <span class="results-icon">🏆</span>
+        <h2 class="results-title">Résultats du Quiz</h2>
+      </div>
+
+      <div class="score-display">
+        <div class="score-circle">
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="90" class="score-bg"></circle>
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              class="score-progress"
+              [style.stroke-dashoffset]="565 - (565 * score / 100)"
+            ></circle>
+          </svg>
+          <div class="score-text">
+            <span class="score-number">{{ score }}%</span>
+            <span class="score-label">Score</span>
+          </div>
+        </div>
+
+        <div class="score-message">
+          <h3 *ngIf="score >= 80">🎉 Excellent travail !</h3>
+          <h3 *ngIf="score >= 60 && score < 80">👍 Bon travail !</h3>
+          <h3 *ngIf="score >= 40 && score < 60">💪 Continue tes efforts !</h3>
+          <h3 *ngIf="score < 40">📚 Révise encore un peu !</h3>
+
+          <p *ngIf="score >= 80">Tu maîtrises parfaitement le sujet. Bravo !</p>
+          <p *ngIf="score >= 60 && score < 80">Tu as une bonne compréhension du cours.</p>
+          <p *ngIf="score >= 40 && score < 60">Tu as les bases, mais quelques révisions seraient utiles.</p>
+          <p *ngIf="score < 40">Prends le temps de réviser le cours plus en détail.</p>
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button class="action-btn primary" (click)="restartQuiz()">
+          🔄 Recommencer
+        </button>
+        <button class="action-btn secondary" (click)="chapters = []; selectedFile = null">
+          📚 Nouveau cours
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

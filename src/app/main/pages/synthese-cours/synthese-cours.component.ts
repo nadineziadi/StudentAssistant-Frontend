@@ -1,3 +1,4 @@
+import { ResumeService } from './../../../services/resume/resume.service';
 import { Component } from '@angular/core';
 
 @Component({
@@ -11,21 +12,21 @@ export class SyntheseCoursComponent {
   selectedFile: File | null = null;
   summary: string | null = null;
   isGenerating: boolean = false;
+  expanded: boolean = false;
+  modelUsed: string = '';
+  originalLength: number | null = null;
 
-  // Handle file selection
+  constructor(private ResumeService: ResumeService) {}
+
   onFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
+    if (file) this.selectedFile = file;
   }
 
-  // Remove selected file
   removeFile(): void {
     this.selectedFile = null;
   }
 
-  // Convert bytes to readable size (e.g. MB)
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -34,53 +35,62 @@ export class SyntheseCoursComponent {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // Generate summary (mock function for now)
   generateSummary(): void {
+    if (!this.inputText && !this.selectedFile) return;
+
     this.isGenerating = true;
     this.summary = null;
 
-    // simulate an API call delay
-    setTimeout(() => {
-      if (this.inputText || this.selectedFile) {
-        this.summary = `
-          <p><strong>Résumé généré :</strong></p>
-          <p>Ce document présente les points essentiels du cours.
-          Il aborde les concepts clés, les notions importantes et les idées principales.</p>
-          <ul>
-            <li>✔️ Concepts principaux bien résumés</li>
-            <li>📘 Structure claire et lisible</li>
-            <li>✨ Convient pour une révision rapide</li>
-          </ul>
-        `;
-      }
-      this.isGenerating = false;
-    }, 2000);
+    if (this.activeTab === 'text' && this.inputText) {
+      this.ResumeService.summarizeText(this.inputText).subscribe({
+        next: (res: any) => {
+          this.summary = res.summary || 'Pas de résumé généré';
+          this.modelUsed = res.model || 'Inconnu';
+          this.originalLength = res.original_length || this.inputText.length;
+          this.isGenerating = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.summary = 'Erreur lors de la génération du résumé';
+          this.isGenerating = false;
+        }
+      });
+    } else if (this.activeTab === 'file' && this.selectedFile) {
+      this.ResumeService.summarizeFile(this.selectedFile).subscribe({
+        next: (res: any) => {
+          this.summary = res.summary || 'Pas de résumé généré';
+          this.modelUsed = res.model || 'Inconnu';
+          this.originalLength = res.original_length || null;
+          this.isGenerating = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.summary = 'Erreur lors de la génération du résumé';
+          this.isGenerating = false;
+        }
+      });
+    }
   }
 
-  // Copy summary text to clipboard
   copySummary(): void {
     if (!this.summary) return;
-
-    const tempElement = document.createElement('div');
-    tempElement.innerHTML = this.summary;
-    const text = tempElement.innerText;
-
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard.writeText(this.summary.replace(/<[^>]*>/g, '')).then(() => {
       alert('Synthèse copiée dans le presse-papiers 📋');
     });
   }
 
-  // Download summary as text file
   downloadSummary(): void {
     if (!this.summary) return;
-
     const element = document.createElement('a');
-    const text = this.summary.replace(/<[^>]*>/g, ''); // strip HTML tags
-    const file = new Blob([text], { type: 'text/plain' });
+    const file = new Blob([this.summary.replace(/<[^>]*>/g, '')], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = 'synthese.txt';
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  }
+
+  toggleExpand(): void {
+    this.expanded = !this.expanded;
   }
 }
