@@ -1,4 +1,17 @@
 <div class="redaction-container">
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-notification" *ngIf="showToast" [class.toast-success]="toastType === 'success'"
+       [class.toast-error]="toastType === 'error'" [class.toast-info]="toastType === 'info'">
+    <span class="toast-icon">
+      <span *ngIf="toastType === 'success'">✓</span>
+      <span *ngIf="toastType === 'error'">✕</span>
+      <span *ngIf="toastType === 'info'">ℹ</span>
+    </span>
+    <span class="toast-message">{{ toastMessage }}</span>
+    <button class="toast-close" (click)="closeToast()">×</button>
+  </div>
+
+  <!-- HEADER -->
   <div class="redaction-header">
     <div class="header-content">
       <div class="icon-wrapper">
@@ -9,61 +22,73 @@
         <p class="page-subtitle">Correction grammaticale et suggestions de style propulsées par IA</p>
       </div>
     </div>
+    <div class="stats-badges" *ngIf="documents.length > 0">
+      <div class="stat-badge">
+        <span class="stat-value">{{ documents.length }}</span>
+        <span class="stat-label">Documents</span>
+      </div>
+      <div class="stat-badge stat-success">
+        <span class="stat-value">{{ getCorrectedCount() }}</span>
+        <span class="stat-label">Corrigés</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Main Navigation Tabs -->
+  <!-- MAIN NAVIGATION TABS -->
   <div class="main-tabs-container">
-    <button
-      class="main-tab-btn"
-      [class.active]="activeMainTab === 'correction'"
-      (click)="activeMainTab = 'correction'"
-    >
+    <button class="main-tab-btn" [class.active]="activeMainTab === 'correction'"
+      (click)="activeMainTab = 'correction'">
       <span class="tab-icon">📝</span>
       <div class="tab-text">
         <span class="tab-title">Correction Complète</span>
         <span class="tab-desc">Analyse approfondie</span>
       </div>
     </button>
-    <button
-      class="main-tab-btn"
-      [class.active]="activeMainTab === 'grammar'"
-      (click)="activeMainTab = 'grammar'"
-    >
+    <!-- Dans la section MAIN NAVIGATION TABS -->
+<button class="main-tab-btn" [class.active]="activeMainTab === 'style'"
+  (click)="activeMainTab = 'style'">
+  <span class="tab-icon">🎭</span>
+  <div class="tab-text">
+    <span class="tab-title">Adaptation Style</span>
+    <span class="tab-desc">Personnalisation</span>
+  </div>
+</button>
+    <button class="main-tab-btn" [class.active]="activeMainTab === 'grammar'"
+      (click)="activeMainTab = 'grammar'">
       <span class="tab-icon">⚡</span>
       <div class="tab-text">
         <span class="tab-title">Correction Rapide</span>
         <span class="tab-desc">Grammaire instantanée</span>
       </div>
     </button>
-    <button
-      class="main-tab-btn"
-      [class.active]="activeMainTab === 'translation'"
-      (click)="activeMainTab = 'translation'"
-    >
+    <button class="main-tab-btn" [class.active]="activeMainTab === 'translation'"
+      (click)="activeMainTab = 'translation'">
       <span class="tab-icon">🌍</span>
       <div class="tab-text">
         <span class="tab-title">Traduction</span>
         <span class="tab-desc">FR ⇄ EN</span>
       </div>
     </button>
-    <button
-      class="main-tab-btn"
-      [class.active]="activeMainTab === 'paraphrase'"
-      (click)="activeMainTab = 'paraphrase'"
-    >
+    <button class="main-tab-btn" [class.active]="activeMainTab === 'paraphrase'"
+      (click)="activeMainTab = 'paraphrase'">
       <span class="tab-icon">🔄</span>
       <div class="tab-text">
         <span class="tab-title">Paraphrase</span>
         <span class="tab-desc">Reformulation</span>
       </div>
     </button>
+    <button class="main-tab-btn" [class.active]="activeMainTab === 'history'"
+      (click)="activeMainTab = 'history'; loadHistory()">
+      <span class="tab-icon">📚</span>
+      <div class="tab-text">
+        <span class="tab-title">Historique</span>
+        <span class="tab-desc">{{ documents.length }} documents</span>
+      </div>
+    </button>
   </div>
 
-  <!-- ========================================
-       CORRECTION COMPLÈTE
-       ======================================== -->
+  <!-- CORRECTION COMPLÈTE -->
   <div class="redaction-workspace" *ngIf="activeMainTab === 'correction'">
-    <!-- Input Section -->
     <div class="input-section">
       <div class="section-card">
         <div class="card-header">
@@ -71,57 +96,35 @@
           <span class="section-badge">Étape 1</span>
         </div>
 
-        <!-- Tab Selection -->
         <div class="tab-container">
-          <button
-            class="tab-btn"
-            [class.active]="activeInputTab === 'text'"
-            (click)="activeInputTab = 'text'"
-          >
+          <button class="tab-btn" [class.active]="activeInputTab === 'text'"
+            (click)="activeInputTab = 'text'">
             <span class="tab-icon">✍️</span>
             Coller du texte
           </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeInputTab === 'file'"
-            (click)="activeInputTab = 'file'"
-          >
+          <button class="tab-btn" [class.active]="activeInputTab === 'file'"
+            (click)="activeInputTab = 'file'">
             <span class="tab-icon">📎</span>
             Importer un fichier
           </button>
         </div>
 
-        <!-- Text Input Tab -->
         <div class="tab-content" *ngIf="activeInputTab === 'text'">
-          <textarea
-            class="text-input"
+          <textarea class="text-input"
             placeholder="Écris ou colle ton texte ici... (essais, dissertations, emails, articles, etc.)"
-            rows="12"
-            [(ngModel)]="inputText"
-          ></textarea>
+            rows="12" [(ngModel)]="inputText"></textarea>
           <div class="input-info">
             <span class="char-count">{{ inputText?.length || 0 }} caractères</span>
-            <button
-              *ngIf="inputText"
-              class="clear-text-btn"
-              (click)="clearText()"
-            >
+            <button *ngIf="inputText" class="clear-text-btn" (click)="clearText()">
               Effacer tout
             </button>
           </div>
         </div>
 
-        <!-- File Upload Tab -->
         <div class="tab-content" *ngIf="activeInputTab === 'file'">
           <div class="upload-zone" (click)="fileInput.click()">
-            <input
-              #fileInput
-              type="file"
-              class="file-input"
-              accept=".pdf,.docx,.txt,.doc"
-              (change)="onFileSelected($event)"
-              hidden
-            />
+            <input #fileInput type="file" class="file-input" accept=".pdf,.docx,.txt,.doc"
+              (change)="onFileSelected($event)" hidden />
             <div class="upload-content">
               <span class="upload-icon">📁</span>
               <p class="upload-text">
@@ -145,12 +148,8 @@
           </div>
         </div>
 
-        <!-- Analyze Button -->
-        <button
-          class="generate-btn"
-          [disabled]="isProcessing || (!inputText && !selectedFile)"
-          (click)="analyzeText()"
-        >
+        <button class="generate-btn" [disabled]="isProcessing || (!inputText && !selectedFile)"
+          (click)="analyzeText()">
           <span *ngIf="!isProcessing">🔍 Analyser le texte</span>
           <span *ngIf="isProcessing" class="loading-content">
             <span class="spinner"></span>
@@ -160,7 +159,6 @@
       </div>
     </div>
 
-    <!-- Output Section -->
     <div class="output-section">
       <div class="section-card">
         <div class="card-header">
@@ -168,34 +166,25 @@
           <span class="section-badge">Étape 2</span>
         </div>
 
-        <!-- Tabs -->
         <div class="tab-container">
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'correction'"
-            (click)="activeTab = 'correction'"
-          >
+          <button class="tab-btn" [class.active]="activeTab === 'correction'"
+            (click)="activeTab = 'correction'">
             <span class="tab-icon">✅</span>
             Correction
           </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'suggestions'"
-            (click)="activeTab = 'suggestions'"
-          >
+          <button class="tab-btn" [class.active]="activeTab === 'suggestions'"
+            (click)="activeTab = 'suggestions'">
             <span class="tab-icon">💡</span>
             Suggestions ({{ suggestions.length }})
           </button>
         </div>
 
-        <!-- Empty State -->
         <div class="empty-state" *ngIf="!correctedText && !isProcessing">
           <span class="empty-icon">📝</span>
           <p class="empty-text">Tes corrections apparaîtront ici</p>
           <p class="empty-subtext">Entre du texte et lance l'analyse pour commencer</p>
         </div>
 
-        <!-- Loading State -->
         <div class="loading-state" *ngIf="isProcessing">
           <div class="loading-animation">
             <div class="loading-dot"></div>
@@ -205,7 +194,6 @@
           <p class="loading-text">Analyse grammaticale et stylistique en cours...</p>
         </div>
 
-        <!-- Correction Tab Content -->
         <div class="result-content" *ngIf="correctedText && !isProcessing && activeTab === 'correction'">
           <div class="summary-actions">
             <button class="action-btn" (click)="copyText()">
@@ -226,16 +214,14 @@
           </div>
         </div>
 
-        <!-- Suggestions Tab Content -->
-        <div class="result-content suggestions-content" *ngIf="correctedText && !isProcessing && activeTab === 'suggestions'">
-          <!-- No suggestions state -->
+        <div class="result-content suggestions-content"
+          *ngIf="correctedText && !isProcessing && activeTab === 'suggestions'">
           <div class="empty-state" *ngIf="suggestions.length === 0">
             <span class="empty-icon">🎉</span>
             <p class="empty-text">Aucune suggestion</p>
             <p class="empty-subtext">Ton texte semble déjà bien rédigé !</p>
           </div>
 
-          <!-- Suggestions list -->
           <div class="suggestions-list" *ngIf="suggestions.length > 0">
             <div class="suggestion-card" *ngFor="let suggestion of suggestions">
               <div class="suggestion-header">
@@ -258,10 +244,7 @@
                 </div>
               </div>
 
-              <button
-                class="apply-btn"
-                (click)="applySuggestion(suggestion)"
-              >
+              <button class="apply-btn" (click)="applySuggestion(suggestion)">
                 Appliquer la correction
               </button>
             </div>
@@ -271,9 +254,7 @@
     </div>
   </div>
 
-  <!-- ========================================
-       CORRECTION GRAMMATICALE RAPIDE
-       ======================================== -->
+  <!-- CORRECTION RAPIDE -->
   <div class="quick-grammar-container" *ngIf="activeMainTab === 'grammar'">
     <div class="section-card full-width">
       <div class="card-header">
@@ -282,24 +263,18 @@
       </div>
 
       <div class="grammar-grid">
-        <!-- Input -->
         <div class="grammar-section">
           <label class="grammar-label">
             <span class="label-icon">✍️</span>
             Texte original
           </label>
-          <textarea
-            class="text-input"
-            placeholder="Entre ton texte à corriger..."
-            rows="10"
-            [(ngModel)]="grammarInputText"
-          ></textarea>
+          <textarea class="text-input" placeholder="Entre ton texte à corriger..." rows="10"
+            [(ngModel)]="grammarInputText"></textarea>
           <div class="input-info">
             <span class="char-count">{{ grammarInputText?.length || 0 }} caractères</span>
           </div>
         </div>
 
-        <!-- Output -->
         <div class="grammar-section">
           <label class="grammar-label">
             <span class="label-icon">✅</span>
@@ -323,31 +298,20 @@
         </div>
       </div>
 
-      <!-- Actions -->
       <div class="action-buttons">
-        <button
-          class="generate-btn"
-          [disabled]="isGrammarProcessing || !grammarInputText.trim()"
-          (click)="correctGrammarQuick()"
-        >
+        <button class="generate-btn" [disabled]="isGrammarProcessing || !grammarInputText.trim()"
+          (click)="correctGrammarQuick()">
           <span *ngIf="!isGrammarProcessing">⚡ Corriger</span>
           <span *ngIf="isGrammarProcessing" class="loading-content">
             <span class="spinner"></span>
             Correction...
           </span>
         </button>
-        <button
-          class="action-btn secondary"
-          [disabled]="!grammarCorrectedText"
-          (click)="copyGrammarText()"
-        >
+        <button class="action-btn secondary" [disabled]="!grammarCorrectedText" (click)="copyGrammarText()">
           <span>📋</span>
           Copier
         </button>
-        <button
-          class="action-btn secondary"
-          (click)="clearGrammar()"
-        >
+        <button class="action-btn secondary" (click)="clearGrammar()">
           <span>🗑️</span>
           Effacer
         </button>
@@ -355,9 +319,7 @@
     </div>
   </div>
 
-  <!-- ========================================
-       TRADUCTION
-       ======================================== -->
+  <!-- TRADUCTION -->
   <div class="translation-container" *ngIf="activeMainTab === 'translation'">
     <div class="section-card full-width">
       <div class="card-header">
@@ -366,7 +328,6 @@
       </div>
 
       <div class="translation-grid">
-        <!-- Input -->
         <div class="translation-section">
           <div class="language-header">
             <label class="grammar-label">
@@ -374,25 +335,19 @@
               {{ translationDirection === 'en-fr' ? 'Anglais' : 'Français' }}
             </label>
           </div>
-          <textarea
-            class="text-input"
-            placeholder="Entre ton texte à traduire..."
-            rows="10"
-            [(ngModel)]="translationInputText"
-          ></textarea>
+          <textarea class="text-input" placeholder="Entre ton texte à traduire..." rows="10"
+            [(ngModel)]="translationInputText"></textarea>
           <div class="input-info">
             <span class="char-count">{{ translationInputText?.length || 0 }} caractères</span>
           </div>
         </div>
 
-        <!-- Swap Button -->
         <div class="swap-container">
           <button class="swap-btn" (click)="swapTranslationDirection()">
             <span class="swap-icon">⇄</span>
           </button>
         </div>
 
-        <!-- Output -->
         <div class="translation-section">
           <div class="language-header">
             <label class="grammar-label">
@@ -418,31 +373,20 @@
         </div>
       </div>
 
-      <!-- Actions -->
       <div class="action-buttons">
-        <button
-          class="generate-btn"
-          [disabled]="isTranslationProcessing || !translationInputText.trim()"
-          (click)="translateText()"
-        >
+        <button class="generate-btn" [disabled]="isTranslationProcessing || !translationInputText.trim()"
+          (click)="translateText()">
           <span *ngIf="!isTranslationProcessing">🌍 Traduire</span>
           <span *ngIf="isTranslationProcessing" class="loading-content">
             <span class="spinner"></span>
             Traduction...
           </span>
         </button>
-        <button
-          class="action-btn secondary"
-          [disabled]="!translationOutputText"
-          (click)="copyTranslation()"
-        >
+        <button class="action-btn secondary" [disabled]="!translationOutputText" (click)="copyTranslation()">
           <span>📋</span>
           Copier
         </button>
-        <button
-          class="action-btn secondary"
-          (click)="clearTranslation()"
-        >
+        <button class="action-btn secondary" (click)="clearTranslation()">
           <span>🗑️</span>
           Effacer
         </button>
@@ -450,9 +394,136 @@
     </div>
   </div>
 
-  <!-- ========================================
-       PARAPHRASE
-       ======================================== -->
+  <!-- PARAPHRASE -->
+
+  <!-- ADAPTATION DE STYLE -->
+<div class="style-adaptation-container" *ngIf="activeMainTab === 'style'">
+  <div class="section-card full-width">
+    <div class="card-header">
+      <h2 class="section-title">🎭 Adaptation de Style</h2>
+      <span class="section-badge">Personnalisation avancée</span>
+    </div>
+
+    <!-- Sélection du style -->
+    <div class="style-selection-section">
+      <label class="grammar-label">
+        <span class="label-icon">🎯</span>
+        Choisir un style
+      </label>
+      <div class="style-grid">
+        <button class="style-card"
+                *ngFor="let style of availableStyles"
+                [class.active]="selectedStyle === style.value"
+                (click)="selectedStyle = style.value">
+          <span class="style-icon">{{ style.icon }}</span>
+          <span class="style-name">{{ style.label }}</span>
+          <span class="style-desc">{{ style.description }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Zone de texte -->
+    <div class="style-input-section">
+      <label class="grammar-label">
+        <span class="label-icon">✍️</span>
+        Texte à adapter
+      </label>
+      <textarea class="text-input"
+                placeholder="Entre ton texte à adapter..."
+                rows="8"
+                [(ngModel)]="styleInputText"></textarea>
+      <div class="input-info">
+        <span class="char-count">{{ styleInputText?.length || 0 }} caractères</span>
+      </div>
+    </div>
+
+    <!-- Bouton de génération -->
+    <button class="generate-btn"
+            [disabled]="isStyleAdaptationProcessing || !styleInputText.trim()"
+            (click)="adaptStyle()">
+      <span *ngIf="!isStyleAdaptationProcessing">🎭 Adapter le style</span>
+      <span *ngIf="isStyleAdaptationProcessing" class="loading-content">
+        <span class="spinner"></span>
+        Adaptation en cours...
+      </span>
+    </button>
+
+    <!-- Résultats -->
+    <div class="style-results" *ngIf="styleAdaptationResults && !isStyleAdaptationProcessing">
+      <h3 class="results-title">✨ Résultats de l'adaptation</h3>
+
+      <div class="result-steps">
+        <!-- Étape 1: Correction -->
+        <div class="result-step">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <span class="step-title">Correction grammaticale</span>
+            <button class="copy-btn-small" (click)="copyStyleText(styleAdaptationResults.corrected_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text">{{ styleAdaptationResults.corrected_text }}</p>
+          </div>
+        </div>
+
+        <!-- Étape 2: Paraphrase -->
+        <div class="result-step">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <span class="step-title">Paraphrase</span>
+            <button class="copy-btn-small" (click)="copyStyleText(styleAdaptationResults.paraphrased_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text">{{ styleAdaptationResults.paraphrased_text }}</p>
+          </div>
+        </div>
+
+        <!-- Étape 3: Adaptation finale -->
+        <div class="result-step final-step">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <span class="step-title">Style {{ getStyleLabel(styleAdaptationResults.style) }}</span>
+            <button class="copy-btn-small primary" (click)="copyStyleText(styleAdaptationResults.adapted_text)">
+              📋 Copier
+            </button>
+          </div>
+          <div class="step-content">
+            <p class="step-text adapted">{{ styleAdaptationResults.adapted_text }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- État vide -->
+    <div class="empty-state" *ngIf="!styleAdaptationResults && !isStyleAdaptationProcessing">
+      <span class="empty-icon">🎭</span>
+      <p class="empty-text">Tes adaptations de style apparaîtront ici</p>
+      <p class="empty-subtext">Choisis un style et entre du texte pour commencer</p>
+    </div>
+
+    <!-- État chargement -->
+    <div class="loading-state" *ngIf="isStyleAdaptationProcessing">
+      <div class="loading-animation">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <p class="loading-text">Adaptation du style en cours...</p>
+      <p class="loading-subtext">Correction → Paraphrase → Adaptation</p>
+    </div>
+
+    <!-- Bouton effacer -->
+    <button class="action-btn secondary full-width-btn"
+            *ngIf="styleAdaptationResults"
+            (click)="clearStyle()">
+      <span>🗑️</span>
+      Effacer tout
+    </button>
+  </div>
+</div>
   <div class="paraphrase-container" *ngIf="activeMainTab === 'paraphrase'">
     <div class="section-card full-width">
       <div class="card-header">
@@ -460,29 +531,20 @@
         <span class="section-badge">3 Versions</span>
       </div>
 
-      <!-- Input -->
       <div class="paraphrase-input-section">
         <label class="grammar-label">
           <span class="label-icon">✍️</span>
           Texte à paraphraser
         </label>
-        <textarea
-          class="text-input"
-          placeholder="Entre ton texte à reformuler..."
-          rows="6"
-          [(ngModel)]="paraphraseInputText"
-        ></textarea>
+        <textarea class="text-input" placeholder="Entre ton texte à reformuler..." rows="6"
+          [(ngModel)]="paraphraseInputText"></textarea>
         <div class="input-info">
           <span class="char-count">{{ paraphraseInputText?.length || 0 }} caractères</span>
         </div>
       </div>
 
-      <!-- Action Button -->
-      <button
-        class="generate-btn"
-        [disabled]="isParaphraseProcessing || !paraphraseInputText.trim()"
-        (click)="paraphraseText()"
-      >
+      <button class="generate-btn" [disabled]="isParaphraseProcessing || !paraphraseInputText.trim()"
+        (click)="paraphraseText()">
         <span *ngIf="!isParaphraseProcessing">🔄 Générer des paraphrases</span>
         <span *ngIf="isParaphraseProcessing" class="loading-content">
           <span class="spinner"></span>
@@ -490,7 +552,6 @@
         </span>
       </button>
 
-      <!-- Results -->
       <div class="paraphrase-results" *ngIf="paraphraseResults.length > 0 && !isParaphraseProcessing">
         <h3 class="results-title">✨ Propositions de reformulation</h3>
         <div class="paraphrase-cards">
@@ -507,14 +568,12 @@
         </div>
       </div>
 
-      <!-- Empty State -->
       <div class="empty-state" *ngIf="paraphraseResults.length === 0 && !isParaphraseProcessing">
         <span class="empty-icon">🔄</span>
         <p class="empty-text">Tes paraphrases apparaîtront ici</p>
         <p class="empty-subtext">Entre du texte et lance la génération</p>
       </div>
 
-      <!-- Loading State -->
       <div class="loading-state" *ngIf="isParaphraseProcessing">
         <div class="loading-animation">
           <div class="loading-dot"></div>
@@ -524,15 +583,153 @@
         <p class="loading-text">Génération de reformulations créatives...</p>
       </div>
 
-      <!-- Clear Button -->
-      <button
-        class="action-btn secondary full-width-btn"
-        *ngIf="paraphraseResults.length > 0"
-        (click)="clearParaphrase()"
-      >
+      <button class="action-btn secondary full-width-btn" *ngIf="paraphraseResults.length > 0"
+        (click)="clearParaphrase()">
         <span>🗑️</span>
         Effacer tout
       </button>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div class="history-container" *ngIf="activeMainTab === 'history'">
+    <div class="section-card full-width">
+      <div class="card-header">
+        <h2 class="section-title">📚 Historique des documents</h2>
+        <span class="section-badge">{{ documents.length }} documents</span>
+      </div>
+
+      <div class="history-controls" *ngIf="documents.length > 0">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Rechercher un document..."
+            [(ngModel)]="searchQuery" (input)="onSearchChange()" />
+        </div>
+
+        <div class="filter-buttons">
+          <button class="filter-btn" [class.active]="selectedFilter === 'all'"
+            (click)="onFilterChange('all')">
+            Tous ({{ documents.length }})
+          </button>
+          <button class="filter-btn filter-success" [class.active]="selectedFilter === 'corrected'"
+            (click)="onFilterChange('corrected')">
+            ✓ Corrigés ({{ getCorrectedCount() }})
+          </button>
+          <button class="filter-btn filter-pending" [class.active]="selectedFilter === 'uncorrected'"
+            (click)="onFilterChange('uncorrected')">
+            ⏳ En attente ({{ getUncorrectedCount() }})
+          </button>
+        </div>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoadingHistory">
+        <div class="spinner-large"></div>
+        <p class="loading-text">Chargement de l'historique...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoadingHistory && documents.length === 0">
+        <span class="empty-icon">📭</span>
+        <p class="empty-text">Aucun document trouvé</p>
+        <p class="empty-subtext">Commence par analyser ton premier texte</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoadingHistory && documents.length > 0 && filteredDocuments.length === 0">
+        <span class="empty-icon">🔍</span>
+        <p class="empty-text">Aucun résultat</p>
+        <p class="empty-subtext">Essaie avec d'autres mots-clés</p>
+      </div>
+
+      <div class="documents-grid" *ngIf="!isLoadingHistory && filteredDocuments.length > 0">
+        <div class="document-card" *ngFor="let doc of filteredDocuments">
+          <div class="document-status" [class.corrected]="doc.isCorrected" [class.pending]="!doc.isCorrected">
+            {{ doc.isCorrected ? '✓ Corrigé' : '⏳ En attente' }}
+          </div>
+
+          <h3 class="document-title">{{ doc.title }}</h3>
+
+          <div class="document-meta">
+            <span class="meta-item">
+              <span class="meta-icon">📅</span>
+              {{ formatDate(doc.createdAt) }}
+            </span>
+            <span class="meta-item" *ngIf="doc.fileName">
+              <span class="meta-icon">📎</span>
+              {{ doc.fileName }}
+            </span>
+          </div>
+
+          <div class="document-preview">
+            {{ getPreviewText(doc.originalContent) }}
+          </div>
+
+          <div class="document-stats" *ngIf="doc.isCorrected && doc.totalSuggestions">
+            <span class="stat-item">
+              <span class="stat-icon">💡</span>
+              {{ doc.totalSuggestions }} suggestions
+            </span>
+          </div>
+
+          <div class="document-actions">
+            <button class="action-btn-small" (click)="viewDocumentDetails(doc)" *ngIf="doc.isCorrected">
+              <span>👁️</span>
+              Voir
+            </button>
+            <button class="action-btn-small action-danger" (click)="deleteDocument(doc.id)">
+              <span>🗑️</span>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-count" *ngIf="!isLoadingHistory && filteredDocuments.length > 0">
+        Affichage de {{ filteredDocuments.length }} sur {{ documents.length }} document(s)
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DÉTAILS -->
+  <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">📄 {{ selectedDocument?.title }}</h2>
+        <button class="modal-close" (click)="closeDetailModal()">×</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedDocument">
+        <div class="modal-section">
+          <h3 class="modal-section-title">📝 Texte original</h3>
+          <div class="modal-text-box">
+            {{ selectedDocument.originalContent }}
+          </div>
+        </div>
+
+        <div class="modal-section" *ngIf="selectedDocument.isCorrected && selectedDocument.correctedContent">
+          <h3 class="modal-section-title">✨ Texte corrigé</h3>
+          <div class="modal-text-box corrected">
+            {{ selectedDocument.correctedContent }}
+          </div>
+        </div>
+
+        <div class="modal-meta">
+          <div class="meta-row">
+            <span class="meta-label">Date de création:</span>
+            <span class="meta-value">{{ formatDate(selectedDocument.createdAt) }}</span>
+          </div>
+          <div class="meta-row" *ngIf="selectedDocument.lastCorrectedAt">
+            <span class="meta-label">Dernière correction:</span>
+            <span class="meta-value">{{ formatDate(selectedDocument.lastCorrectedAt) }}</span>
+          </div>
+          <div class="meta-row" *ngIf="selectedDocument.totalSuggestions">
+            <span class="meta-label">Suggestions:</span>
+            <span class="meta-value">{{ selectedDocument.totalSuggestions }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn" (click)="closeDetailModal()">Fermer</button>
+      </div>
     </div>
   </div>
 </div>

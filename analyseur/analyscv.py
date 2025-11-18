@@ -223,7 +223,7 @@ def analyze_cv_file():
 
 # ----------------- Run server -----------------
 if __name__ == "__main__":
-    port = 5000
+    port = 5001
     print("\n" + "🚀 "*20)
     print(f"   Flask CV Analyzer Starting")
     print(f"   → http://0.0.0.0:{port}")

@@ -8,15 +8,16 @@ export interface Document {
   username: string;
   title: string;
   originalContent: string;
-  correctedContent: string;
-  fileName: string;
+  correctedContent?: string;
+  fileName?: string;
   createdAt: string;
-  lastCorrectedAt: string;
+  lastCorrectedAt?: string;
   isCorrected: boolean;
+  totalSuggestions?: number;
 }
 
 export interface Suggestion {
-  type: 'GRAMMAR' | 'STYLE' | 'ORTHOGRAPHY' | 'PARAPHRASE';
+  type: 'GRAMMAR' | 'SPELLING' | 'PUNCTUATION' | 'STYLE' | 'VOCABULARY';
   original: string;
   correction: string;
   rule: string;
@@ -48,6 +49,18 @@ export interface ParaphraseResponse {
   reformulations: string[];
 }
 
+export interface StyleAdaptationResponse {
+  original: string;
+  corrected_text: string;
+  paraphrased_text: string;
+  style: string;
+  adapted_text: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,6 +68,8 @@ export class RedactionService {
   private apiUrl = 'http://localhost:8222/api/redaction';
 
   constructor(private http: HttpClient) {}
+
+
 
   // Get headers with JWT token
   private getHeaders(): HttpHeaders {
@@ -112,10 +127,19 @@ export class RedactionService {
   }
 
   // Get document report
-  getDocumentReport(documentId: number): Observable<any> {
+  getDocumentReport(documentId: number): Observable<CorrectionResponse> {
     const headers = this.getHeaders();
-    return this.http.get(
+    return this.http.get<CorrectionResponse>(
       `${this.apiUrl}/documents/${documentId}/report`,
+      { headers }
+    );
+  }
+
+  // Delete document
+  deleteDocument(documentId: number): Observable<void> {
+    const headers = this.getHeaders();
+    return this.http.delete<void>(
+      `${this.apiUrl}/documents/${documentId}`,
       { headers }
     );
   }
@@ -151,4 +175,11 @@ export class RedactionService {
       { text }
     );
   }
+
+   adaptStyle(text: string, style: string): Observable<StyleAdaptationResponse> {
+    return this.http.post<StyleAdaptationResponse>(
+      `${this.apiUrl}/style-adaptation`,
+      { text, style }
+    );
+}
 }
